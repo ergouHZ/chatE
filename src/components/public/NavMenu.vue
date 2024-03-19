@@ -31,12 +31,12 @@
                 <template #title>Navigator Two</template>
             </el-menu-item>
         </RouterLink>
-        <el-menu-item index="3" disabled>
-            <el-icon>
-                <document />
-            </el-icon>
-            <template #title>Navigator Three</template>
-        </el-menu-item>
+        <RouterLink to="/ChatWindow">
+            <el-menu-item index="3">
+                <el-icon><ChatLineSquare /></el-icon>
+                <template #title>Chat</template>
+            </el-menu-item>
+        </RouterLink>
         <RouterLink to="/user/login">
             <el-menu-item index="4">
                 <el-icon>
@@ -54,6 +54,7 @@ import {
     Menu as IconMenu,
     Location,
     Setting,
+    ChatLineSquare,
 } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 
