@@ -88,10 +88,8 @@ const postUser = async (postMethod: string) => {
     //post method means "login" or "register" etc.
     try {
         const response = await axios.post(`${baseUrl}/${postMethod}`, {
-
             username: username.value,
             password: password.value
-
         })
         data.value = response.data
     } catch (err: any) {

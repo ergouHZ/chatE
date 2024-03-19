@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import {
+  CirclePlus,
+  Delete,
+  Loading
+} from '@element-plus/icons-vue';
 import { provide } from 'vue';
 import { RouterView } from 'vue-router';
 import CaptchaForm from './components/public/CaptchaForm.vue';
 import NavMenu from './components/public/NavMenu.vue';
 import PageHeader from './components/public/PageHeader.vue';
-
 
 //这里定义全局的url
 const baseUrl = 'http://localhost:8080';
@@ -49,6 +53,16 @@ provide('baseUrl', baseUrl);
           </el-main>
           <el-footer>Footer</el-footer>
           <CaptchaForm />
+          <el-icon>
+            <CirclePlus />
+          </el-icon>
+          <el-icon>
+            <Delete />
+          </el-icon>
+          <el-icon class="is-loading">
+            <Loading />
+          </el-icon>
+
         </el-container>
       </el-container>
     </el-container>
