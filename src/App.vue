@@ -22,18 +22,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
 import { RouterView } from 'vue-router';
+import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
 import PageHeader from './views/PageHeader.vue';
 
+import { inject } from 'vue';
+const baseUrl = inject('baseUrl');//get global url
 
-const item = {
-  date: '2016-05-02',
-  name: 'Tom',
-  address: 'No. 189, Grove St, Los Angeles',
-}
-const tableData = ref(Array.from({ length: 20 }).fill(item))
+const userSession = useUserStore();
+
+onBeforeMount(() =>{
+  userSession.initSession();
+console.log(userSession.generateToken());
+})
+
+
 </script>
 
 <style scoped>
@@ -65,6 +69,7 @@ const tableData = ref(Array.from({ length: 20 }).fill(item))
 }
 
 html {
-  background-color: rgba(127, 255, 212, 0.282);
+  background-color: rgba(11, 122, 178, 0.282);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 </style>

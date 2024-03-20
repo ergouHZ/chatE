@@ -1,7 +1,6 @@
 <script setup lang="ts">
-
+import { useApiStore } from '@/stores/apiStore';
 import CaptchaForm from '@/views/CaptchaForm.vue';
-import axios from 'axios';
 import { ref } from 'vue';
 
 // 定义响应式数据
@@ -9,8 +8,9 @@ const data = ref<any>(null)
 const error = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
-import { inject } from 'vue';
-const baseUrl = inject('baseUrl');//get global url
+const apiStore = useApiStore(); // get the api info
+const baseUrl = apiStore.baseUrl;//get global url
+const axiosInstance = apiStore.axiosInstance;
 
 const username = ref('')
 const password = ref('')
@@ -61,7 +61,7 @@ function validateOnBlur(field: 'username' | 'password') {
     }
 }
 
-//Click，unpop the error message
+//Click，unpop the error message，如果指针移到外面，显示另一个的错误
 function validateOnClick(field: 'username' | 'password') {
     if (field === 'username') {
         usernameError.value = null
@@ -71,12 +71,16 @@ function validateOnClick(field: 'username' | 'password') {
 }
 
 function login() {
-    if (!usernameError.value) {
+    usernameError.value = validateUsername(username.value) //进行验证，无错误则登录验证，有错误则显示错误
+    passwordError.value = validatePassword(password.value)
+    if (!usernameError.value && !passwordError.value) {
         postUser("login")
     }
 }
 function register() {
-    if (!usernameError.value) {
+    usernameError.value = validateUsername(username.value)
+    passwordError.value = validatePassword(password.value)
+    if (!usernameError.value && !passwordError.value) {
         postUser("register")
     }
 }
@@ -88,7 +92,7 @@ const postUser = async (postMethod: string) => {
     error.value = null
     //post method means "login" or "register" etc.
     try {
-        const response = await axios.post(`${baseUrl}/${postMethod}`, {
+        const response = await axiosInstance.post(`/user/${postMethod}`, {
 
             username: username.value,
             password: password.value
@@ -112,38 +116,38 @@ const refreshCaptcha = () => {
 
 refreshCaptcha(); // 初始化时获取验证码
 
+
 </script>
 
 <template>
 
-<div>
-    <el-space wrap>
-    <el-card class="box-card" style="width: 500px">
-    <template #header>
-        <div class="card-header">
-        <span>username</span>
-        <el-input v-model="username"
-        @blur="validateOnBlur('username')"
-        @click="validateOnClick('username')"
-        style="width: 240px" placeholder="Please input username" />
-        <span v-if="usernameError">{{ usernameError }}</span>
-        </div>
-    </template>
-<div class="text item">
-    <div class="card-header">
-        <span>password</span>
-        <el-input v-model="password" @blur="validateOnBlur('password')" @click="validateOnClick('password')"
-            style="width: 240px" placeholder="input password" />
-        <span v-if="passwordError">{{ passwordError }}</span>
+    <div>
+        <el-space wrap>
+            <el-card class="box-card" style="width: 500px">
+                <template #header>
+                    <div class="card-header">
+                        <span>username</span>
+                        <el-input v-model="username" @blur="validateOnBlur('username')"
+                            @click="validateOnClick('username')" style="width: 240px"
+                            placeholder="Please input username" />
+                        <span class="errorReminder" v-if="usernameError">{{ usernameError }}</span>
+                    </div>
+                </template>
+                <div class="text item">
+                    <div class="card-header">
+                        <span>password</span>
+                        <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
+                            @click="validateOnClick('password')" style="width: 240px" placeholder="input password" />
+                        <span class="errorReminder" v-if="passwordError">{{ passwordError }}</span>
+                    </div>
+                    <CaptchaForm />
+                </div>
+                <br>
+                <el-button type="primary" round @click="login">Login</el-button>
+                <el-button type="info" round @click="register">Register</el-button>
+            </el-card>
+        </el-space>
     </div>
-    <CaptchaForm />
-</div>
-<br>
-<el-button type="primary" round @click="login">Login</el-button>
-<el-button type="info" round @click="register">Register</el-button>
-</el-card>
-</el-space>
-</div>
 
 
 </template>

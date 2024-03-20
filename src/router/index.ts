@@ -1,5 +1,6 @@
 import ChatWindow from '@/components/ChatWindow.vue'
 import LoginForm from '@/components/LoginForm.vue'
+import TestPage from '@/components/TestPage.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -14,6 +15,11 @@ const router = createRouter({
       path: '/chat',
       name: 'Chat',
       component: ChatWindow
+    },
+    {
+      path: '/user',
+      name: 'User',
+      component: TestPage
     }
   ]
 })
