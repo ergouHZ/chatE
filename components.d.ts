@@ -7,8 +7,11 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+<<<<<<< HEAD
     BlogPost: typeof import('./src/components/view/BlogPost.vue')['default']
     CaptchaForm: typeof import('./src/components/public/CaptchaForm.vue')['default']
+=======
+>>>>>>> Zhan_19_03
     ChatWindow: typeof import('./src/components/ChatWindow.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
@@ -35,8 +38,11 @@ declare module 'vue' {
     IconSupport: typeof import('./src/components/icons/IconSupport.vue')['default']
     IconTooling: typeof import('./src/components/icons/IconTooling.vue')['default']
     LoginForm: typeof import('./src/components/LoginForm.vue')['default']
+<<<<<<< HEAD
     NavMenu: typeof import('./src/components/public/NavMenu.vue')['default']
     PageHeader: typeof import('./src/components/public/PageHeader.vue')['default']
+=======
+>>>>>>> Zhan_19_03
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TestPage: typeof import('./src/components/TestPage.vue')['default']
