@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import BlogPost from './view/BlogPost.vue';
+import BlogPost from '../views/BlogPost.vue';
 
 const posts = ref([
     { id: 1, title: 'My journey with Vue', body: 'ok1111' },

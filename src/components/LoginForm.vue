@@ -1,7 +1,8 @@
 <script setup lang="ts">
+
+import CaptchaForm from '@/views/CaptchaForm.vue';
 import axios from 'axios';
 import { ref } from 'vue';
-
 
 // 定义响应式数据
 const data = ref<any>(null)
@@ -88,8 +89,10 @@ const postUser = async (postMethod: string) => {
     //post method means "login" or "register" etc.
     try {
         const response = await axios.post(`${baseUrl}/${postMethod}`, {
+
             username: username.value,
             password: password.value
+
         })
         data.value = response.data
     } catch (err: any) {
@@ -111,7 +114,7 @@ refreshCaptcha(); // 初始化时获取验证码
 
 </script>
 
-<template lang="">
+<template>
 
 <div>
     <el-space wrap>
@@ -142,10 +145,10 @@ refreshCaptcha(); // 初始化时获取验证码
 </el-space>
 </div>
 
+
 </template>
 
 
 <style lang="">
-
 
 </style>

@@ -20,12 +20,11 @@
 
 </el-page-header>
 
-
 <div class="wrapper">
   <nav>
-
   </nav>
 </div>
+
 </template>
 <script setup lang="ts">
 import { useThemeStore } from '@/stores/darkTheme';

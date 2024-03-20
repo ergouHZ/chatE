@@ -31,13 +31,13 @@
                 <template #title>Navigator Two</template>
             </el-menu-item>
         </RouterLink>
-        <RouterLink to="/ChatWindow">
+        <RouterLink to="/chat">
             <el-menu-item index="3">
                 <el-icon><ChatLineSquare /></el-icon>
                 <template #title>Chat</template>
             </el-menu-item>
         </RouterLink>
-        <RouterLink to="/user/login">
+        <RouterLink to="/login">
             <el-menu-item index="4">
                 <el-icon>
                     <setting />
@@ -50,13 +50,13 @@
 
 <script setup lang="ts">
 import {
-    Document,
-    Menu as IconMenu,
-    Location,
-    Setting,
-    ChatLineSquare,
+ChatLineSquare,
+Menu as IconMenu,
+Location,
+Setting
 } from '@element-plus/icons-vue';
 import { ref } from 'vue';
+import { RouterLink } from 'vue-router';
 
 defineProps<{
     title?: string
