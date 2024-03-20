@@ -65,6 +65,6 @@ const tableData = ref(Array.from({ length: 20 }).fill(item))
 }
 
 html {
-  background-color: rgba(127, 255, 212, 0.282);
+  background-color: rgba(11, 122, 178, 0.282);
 }
 </style>
