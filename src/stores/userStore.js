@@ -28,7 +28,7 @@ export const useUserStore = defineStore("store", {
       }
     },
 
-    //在用户登录之后创建session
+    //在用户登录之后创建session,生成令牌，把令牌更新到服务器，然后从服务器获取权限
     afterLoginForm (username){
       this.initSession();
     },
@@ -51,7 +51,7 @@ export const useUserStore = defineStore("store", {
             isLoggedIn: true,
             permissions: response.data.permissions,
             roles: response.data.roles,
-            expiresAt: new Date().getTime() + 360000000, // 令牌过期时间为1周
+            expiresAt: new Date().getTime() + 36000000, // 令牌过期时间为1周
           };
 
           this.setSession(session); //将生成的所有的信息，保存到新的本地用户会话

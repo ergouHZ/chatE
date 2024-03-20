@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useApiStore } from '@/stores/apiStore';
+import { useUserStore } from '@/stores/userStore';
 import CaptchaForm from '@/views/CaptchaForm.vue';
+import type { AxiosInstance } from 'axios';
 import { ref } from 'vue';
 
 // 定义响应式数据
@@ -8,9 +10,10 @@ const data = ref<any>(null)
 const error = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
+const userStore = useUserStore(); // get the user info session
 const apiStore = useApiStore(); // get the api info
-const baseUrl = apiStore.baseUrl;//get global url
-const axiosInstance = apiStore.axiosInstance;
+const baseUrl:string = apiStore.baseUrl;//get global url
+const axiosInstance:AxiosInstance = apiStore.axiosInstance;
 
 const username = ref('')
 const password = ref('')
@@ -116,7 +119,7 @@ const refreshCaptcha = () => {
 
 refreshCaptcha(); // 初始化时获取验证码
 
-
+const logout = () => userStore.logout();
 </script>
 
 <template>
@@ -146,6 +149,7 @@ refreshCaptcha(); // 初始化时获取验证码
                 <el-button type="primary" round @click="login">Login</el-button>
                 <el-button type="info" round @click="register">Register</el-button>
             </el-card>
+            <el-button type="warning" @click="logout">登出测试</el-button>
         </el-space>
     </div>
 
