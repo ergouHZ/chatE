@@ -9,6 +9,7 @@ export const useUserStore = defineStore("store", {
       isLoggedIn: false,
       permissions: [],
       roles: [],
+      credits: [],
       expiresAt: null,
     },
   }),
@@ -32,14 +33,34 @@ export const useUserStore = defineStore("store", {
     async afterLoginForm (username){
       const apiStore = useApiStore();
       axiosInstance = apiStore.axiosInstance;
-      await axiosInstance.get('/user/session',)
+
+      try{
+      const response=await axiosInstance.get('/user/session',{
+        username: username,
+        token:this.generateToken()
+      });
+      console.log(response.data);
+      const session = {
+        username: response.data.username,
+        token: this.generateToken(), // 生成令牌
+        isLoggedIn: true,
+        permissions: response.data.permissions,
+        credits: response.data.credits,
+        roles: response.data.roles,
+        expiresAt: new Date().getTime() + 36000000, // 令牌过期时间为1周
+      };
+      this.setSession(session); // 将生成的所有的信息，保存到新的本地用户会话
+      localStorage.setItem("session", JSON.stringify(session)); // 存储到本地存储
+      }catch (error) {
+        console.log(error);
+      }
     },
+
 
     //读取之后直接进行后台使用令牌登录
     async login() {
       const apiStore = useApiStore();
       axiosInstance = apiStore.axiosInstance;
-
       try {
         const response = await axiosInstance.post("/user/session", {
           token: this.session.token,  //通过令牌进行验证
@@ -51,6 +72,7 @@ export const useUserStore = defineStore("store", {
           token: this.generateToken(), // 生成令牌
           isLoggedIn: true,
           permissions: response.data.permissions,
+          credits: response.data.credits,
           roles: response.data.roles,
           expiresAt: new Date().getTime() + 36000000, // 令牌过期时间为1周
         };
@@ -68,6 +90,7 @@ export const useUserStore = defineStore("store", {
         isLoggedIn: false,
         permissions: [],
         roles: [],
+        credits: [],
         expiresAt: null,
       });
       localStorage.removeItem("session"); // 清除本地存储
