@@ -23,18 +23,19 @@
 
 <script lang="ts" setup>
 import { RouterView } from 'vue-router';
+import { useApiStore } from './stores/apiStore';
 import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
 import PageHeader from './views/PageHeader.vue';
 
-import { inject } from 'vue';
-const baseUrl = inject('baseUrl');//get global url
+const apiStore = useApiStore();
+const baseUrl = apiStore.baseUrl;//get global url
 
 const userSession = useUserStore();
 
 onBeforeMount(() =>{
   userSession.initSession();
-console.log(userSession.generateToken());
+console.log(userSession.session);
 })
 
 

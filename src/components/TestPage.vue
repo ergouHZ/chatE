@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useApiStore } from '@/stores/apiStore';
 import { useCounterStore } from '@/stores/counter';
+import axios from 'axios';
 import { ref } from 'vue';
 import BlogPost from '../views/BlogPost.vue';
 
@@ -14,11 +15,17 @@ const postFontSize = ref(1)
 const counterStore = useCounterStore()
 const apiStore = useApiStore()
 
-function oukei(){
-    counterStore.count = counterStore.doubleCount
-    console.log(counterStore.count);
-
+function oukei() {
+    axios.get('/hello', {
+    })
+        .then(response => {
+            console.log(response);
+        })
+        .catch(error => {
+            console.log(error);
+        });
 }
+
 </script>
 
 <template>
