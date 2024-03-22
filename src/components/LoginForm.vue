@@ -92,24 +92,23 @@ function register() {
 const postUser = async (postMethod: string) => {
     loading.value = true
     error.value = null
-    /* axios.interceptors.request.use(config => {
-        console.log('Request Headers:', config.headers);
-        return config;
-    }); */
-    
-    //post method means "login" or "register" etc.
-    try {
-        const response = await axios.post(`/user/${postMethod}`, {
-            username: username.value,
-            password: password.value
+
+    await axios.post(`/user/${postMethod}`, {
+        username: username.value,
+        password: password.value
+    })
+        .then((res) => {
+            userStore.afterLoginForm(username.value);//手动登录后，生成令牌存到服务器；然后获取权限，存入用户session
+            data.value = res.data
+            console.log(data.value)
+            loading.value = false
         })
-        data.value = response.data
-    } catch (err: any) {
-        error.value = err.message
-    } finally {
-        loading.value = false
-    }
-    userStore.afterLoginForm(username.value);//手动登录后，生成令牌存到服务器；然后获取权限，存入用户session
+        .catch((error) => {
+            console.log(error.response.data.error)
+            error.value = error.response.data.error
+            loading.value = false
+        })
+
 }
 
 const captchaUrl = ref('');
@@ -121,7 +120,8 @@ const refreshCaptcha = () => {
 refreshCaptcha(); // 初始化时获取验证码
 
 const logout = () => userStore.logout();
-const session = ()=> userStore.afterLoginForm(username.value)
+const session = () => userStore.afterLoginForm(username.value)
+const fakeLogin = () => userStore.fakeLogin();
 </script>
 
 <template>
@@ -153,6 +153,7 @@ const session = ()=> userStore.afterLoginForm(username.value)
             </el-card>
             <el-button type="warning" @click="logout">登出测试</el-button>
             <el-button type="warning" @click="session">session测试</el-button>
+            <el-button type="warning" @click="fakeLogin">假登录</el-button>
         </el-space>
     </div>
 
