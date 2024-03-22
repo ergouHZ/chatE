@@ -2,20 +2,28 @@
   <html>
 
   <body>
-    <PageHeader />
-    <el-container class="layout-container-demo" style="height: 100%">
-      <el-aside width="200px">
-        <NavMenu />
-      </el-aside>
+    <div v-if="userSession.session.isLoggedIn" class="mainPage">
+      <PageHeader />
+      <el-container class="layout-container-demo" style="height: 100%">
+        <el-aside width="200px">
+          <NavMenu />
+        </el-aside>
 
-      <el-container>
-        <el-header style="text-align: right; font-size: 12px">
-        </el-header>
-        <el-main>
-          <RouterView />
-        </el-main>
+        <el-container>
+          <el-header style="text-align: right; font-size: 12px">
+          </el-header>
+          <el-main>
+            <RouterView />
+          </el-main>
+        </el-container>
       </el-container>
-    </el-container>
+    </div>
+    <div v-if="!userSession.session.isLoggedIn" class="loginPage">
+      <LoginForm />
+    </div>
+
+   
+
   </body>
 
   </html>
@@ -23,6 +31,7 @@
 
 <script lang="ts" setup>
 import { RouterView } from 'vue-router';
+import LoginForm from './components/LoginForm.vue';
 import { useApiStore } from './stores/apiStore';
 import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
@@ -33,9 +42,9 @@ const baseUrl = apiStore.baseUrl;//get global url
 
 const userSession = useUserStore();
 
-onBeforeMount(() =>{
+onBeforeMount(() => {
   userSession.initSession();
-console.log(userSession.session);
+  console.log(userSession.session);
 })
 
 
@@ -70,7 +79,8 @@ console.log(userSession.session);
 }
 
 html {
-  background-color: rgba(11, 122, 178, 0.282);
+  height: 100%;
+  background-color: rgba(29, 167, 241, 0.282);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 </style>
