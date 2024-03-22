@@ -9,7 +9,7 @@ export const useUserStore = defineStore("store", {
       isLoggedIn: false,
       permissions: [],
       roles: [],
-      credits: [],
+      credits: '',
       expiresAt: null,
     },
   }),
@@ -34,6 +34,7 @@ export const useUserStore = defineStore("store", {
         const response = await axios.post("/user/session", {
           username: username,
         });
+        console.log(response);
         const session = {
           username: response.data.data.username,
           isLoggedIn: true,
@@ -46,21 +47,19 @@ export const useUserStore = defineStore("store", {
         localStorage.setItem("session", JSON.stringify(session)); // 存储到本地存储
       } catch (error) {
         console.log(error);
-        
       }
     },
 
     logout() {
       this.setSession({
         username: null,
-        token: null,
         isLoggedIn: false,
         permissions: [],
         roles: [],
         credits: [],
         expiresAt: null,
       });
-      
+
       localStorage.removeItem("session"); // 清除本地存储
       const session = JSON.parse(localStorage.getItem("session"));
     },
@@ -68,12 +67,32 @@ export const useUserStore = defineStore("store", {
     setSession(session) {
       this.session = session;
     },
+
+    fakeLogin() {
+      const session = {
+      
+        username: "test",
+        isLoggedIn: true,
+        permissions: [1],
+        roles: [1],
+        credits: 10000,
+        expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
+      };
+      this.setSession(session);
+      localStorage.setItem("session", JSON.stringify(session)); // 存储到本地存储
+    },
+
     generateToken() {
       // 这里可以使用任何令牌生成算法,例如JWT
       return (
         Math.random().toString(36).substring(2, 15) +
         Math.random().toString(36).substring(2, 15)
       );
+    },
+  },
+  getters: {
+    getLoginstate() {
+      return this.session.isLoggedIn;
     },
   },
 });
