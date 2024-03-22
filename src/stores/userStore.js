@@ -5,7 +5,6 @@ export const useUserStore = defineStore("store", {
   state: () => ({
     session: {
       username: null,
-      token: null,
       isLoggedIn: false,
       permissions: [],
       roles: [],
