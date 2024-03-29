@@ -1,4 +1,3 @@
-import axios from "axios";
 import { defineStore } from "pinia";
 
 export const useUserStore = defineStore("store", {
@@ -8,8 +7,9 @@ export const useUserStore = defineStore("store", {
       isLoggedIn: false,
       permissions: [],
       roles: [],
-      credits: '',
+      credits: "",
       expiresAt: null,
+      thunmbol: ""
     },
   }),
   actions: {
@@ -27,26 +27,18 @@ export const useUserStore = defineStore("store", {
     },
 
     //在用户登录之后创建session,并通过服务器获得令牌，令牌存储到了http中
-    //然后可以访问，然后从服务器获取权限和其他信息，获取ai api也需要这个方法
-    async afterLoginForm(username) {
-      try {
-        const response = await axios.post("/user/session", {
-          username: username,
-        });
-        console.log(response);
-        const session = {
-          username: response.data.data.username,
-          isLoggedIn: true,
-          permissions: response.data.data.authority,
-          credits: response.data.data.credits,
-          roles: response.data.data.roles,
-          expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
-        };
-        this.setSession(session); // 将生成的所有的信息，保存到新的本地用户会话
-        localStorage.setItem("session", JSON.stringify(session)); // 存储到本地存储
-      } catch (error) {
-        console.log(error);
-      }
+    //用户session存储在本地cookie
+    afterLoginForm(user) {
+      const session = {
+        username: user.username,
+        isLoggedIn: true,
+        permissions: user.authority,
+        credits: user.credits,
+        roles: user.roles,
+        thumbnail: user.thumbnail,
+        expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
+      };
+      this.setSession(session); // 将生成的所有的信息，保存到新的本地用户会话
     },
 
     logout() {
@@ -56,6 +48,7 @@ export const useUserStore = defineStore("store", {
         permissions: [],
         roles: [],
         credits: [],
+        thumbnail:"",
         expiresAt: null,
       });
 
@@ -65,16 +58,17 @@ export const useUserStore = defineStore("store", {
 
     setSession(session) {
       this.session = session;
+      localStorage.setItem("session", JSON.stringify(session)); // 存储到本地存储
     },
 
     fakeLogin() {
       const session = {
-      
         username: "test",
         isLoggedIn: true,
         permissions: [1],
         roles: [1],
         credits: 10000,
+        thumbnail:"",
         expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
       };
       this.setSession(session);
