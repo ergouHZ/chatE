@@ -79,7 +79,6 @@ onBeforeMount(() => {
 }
 
 html {
-  height: 100%;
   background-color: rgba(29, 167, 241, 0.282);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
