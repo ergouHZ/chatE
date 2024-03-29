@@ -92,7 +92,6 @@ async function requestTestGPT() {
 
 //验证权限，密钥在注册账户时存进了cookie，需要验证这一步才能建立AI的聊天框
 async function validateTest() {
-    console.log(UserStore.session.username)
     try {
         const res = await axios.post('/chat/validate',
             {
