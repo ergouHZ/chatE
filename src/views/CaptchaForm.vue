@@ -34,7 +34,7 @@ function submitForm() {
     formData.append('captchaInput', captchaInput.value);
 
     axios
-        .post(`${baseUrl}/captcha`, formData)
+        .post(`/captcha`, formData)
         .then((response) => {
             isValidated.value = response.data;
         })
