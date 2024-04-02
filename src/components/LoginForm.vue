@@ -98,9 +98,9 @@ const postUser = async (postMethod: string) => {
         password: password.value
     })
         .then((res) => {
-            userStore.afterLoginForm(res.data.data);//手动登录或注册后，存入用户信息到session
+            userStore.afterLoginForm(res.data.data,res.data.token);//手动登录或注册后，存入用户信息到session
             data.value = res.data
-            console.log(res.data.data)
+            console.log(res.data.message)
             loading.value = false
         })
         .catch((error) => {

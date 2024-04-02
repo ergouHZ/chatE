@@ -4,12 +4,16 @@ export const useUserStore = defineStore("store", {
   state: () => ({
     session: {
       username: null,
+      password: "",
       isLoggedIn: false,
       permissions: [],
       roles: [],
       credits: "",
+      
       expiresAt: null,
-      thunmbol: ""
+      thunmbnail: "",
+
+      token:"",
     },
   }),
   actions: {
@@ -28,15 +32,18 @@ export const useUserStore = defineStore("store", {
 
     //在用户登录之后创建session,并通过服务器获得令牌，令牌存储到了http中
     //用户session存储在本地cookie
-    afterLoginForm(user) {
+    afterLoginForm(user,token) {
       const session = {
         username: user.username,
+        password: user.password,
         isLoggedIn: true,
         permissions: user.authority,
         credits: user.credits,
         roles: user.roles,
         thumbnail: user.thumbnail,
         expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
+        
+        token:token
       };
       this.setSession(session); // 将生成的所有的信息，保存到新的本地用户会话
     },
@@ -45,11 +52,13 @@ export const useUserStore = defineStore("store", {
       this.setSession({
         username: null,
         isLoggedIn: false,
+        password: "",
         permissions: [],
         roles: [],
         credits: [],
         thumbnail:"",
         expiresAt: null,
+        token:"",
       });
 
       localStorage.removeItem("session"); // 清除本地存储
@@ -65,6 +74,7 @@ export const useUserStore = defineStore("store", {
       const session = {
         username: "test",
         isLoggedIn: true,
+        password: "",
         permissions: [1],
         roles: [1],
         credits: 10000,

@@ -2,9 +2,7 @@ import { defineStore } from 'pinia';
 
 export const useApiStore = defineStore('api', {
     state: () => ({
-        baseUrl: 'https://chatserver.eeeegou.com/',
-        openAiApiKey: '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', //访问chatGPT4
-        anthropicApiKey: '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',//访问Claude
+        baseUrl: 'https://chatserver.eeeegou.com',
     }),
 })
 

@@ -26,82 +26,77 @@ function oukei() {
         });
 }
 
+
+axios.defaults.headers.common['Authorization'] = UserStore.session.token;
 //这是发claude的格式
 async function requestTest() {
-    try {
-        const response = await axios.post('/chat/send2claude',
-            ({
-                model: "claude-instant-1.2",
-                max_tokens: 2059,
-                temperature: 0.1,
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            {
-                                type: "text",
-                                text: "介绍一下你自己"
-                            }
-
-                        ]
-                    },
-                    {
-                        role: "assistant",
-                        content: [
-                            {
-                                type: "text",
-                                text: "我是claude"
-                            }
-
-                        ]
-                    }
-                ]
-            })
-        )
-        console.log(response.data[1]);
-    } catch (error) {
-        console.log(error);
-    }
+    await axios.post('/chat/send2claude', {
+        model: "claude-instant-1.2",
+        max_tokens: 2059,
+        temperature: 0.1,
+        messages: [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "介绍一下你自己" }
+            ]
+        },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "当然可以" }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "详细一些" }
+            ]
+        },
+        ]
+    }).then((res) => {
+        console.log(res.data[1]);
+    }).catch((error) => {
+        console.error(error);
+    });
 }
 
-//发送到gtp的格式
 async function requestTestGPT() {
-    try {
-        const response = await axios.post('/chat/send2openai',
-            ({
-                model: "gpt-3.5-turbo-0125",
-                max_tokens: 800,
-                temperature: 0.1,
-                messages: [
-                    {
-                        role: "user",
-                        content: "介绍一下你自己"
-                    },
-                    {
-                        role: "assistant",
-                        content: "我是GPT"
-                    },
-                ]
-            })
-        )
-        console.log(response.data[1]);
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-//验证权限，密钥在注册账户时存进了cookie，需要验证这一步才能建立AI的聊天框
-async function validateTest() {
-    try {
-        const res = await axios.post('/chat/validate',
+    await axios.post('/chat/send2openai', {
+        model: "gpt-3.5-turbo-0125",
+        max_tokens: 800,
+        temperature: 0.1,
+        messages: [
             {
-                username:UserStore.session.username
+                role: "user",
+                content: "介绍一下你自己"
+            },
+            {
+                role: "assistant",
+                content: "我是GPT,一个由OpenAI开发的大型语言模型,我可以帮助您完成各种任务,如写作、编程、问答等。"
             }
-        )
-        console.log(res);
-    } catch (error) {
+        ]
+    }).then((res) => {
+        console.log(res.data[1]);
+    }).catch((error) => {
+        console.error(error);
+    });
+}
+async function validateTest() {
+    await axios.post(`chat/validate`, {
+        username:UserStore.session.username
+    }).then((res) => {
+        console.log(res.data);
+    }).catch((error) => {
         console.log(error);
-    }
+    });
+
 }
 
 </script>
