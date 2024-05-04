@@ -3,22 +3,25 @@
         <div class="messages" v-if="messages.length > 0">
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
-                {{ !message.isUser ? "GPT" : "You" }}
+                {{ !message.isUser ? radio1 : "You" }}
                 <span class="message-content">
                     {{ message.text }}
                 </span>
             </div>
         </div>
         <!-- Loading indicator -->
-        <div v-else class="place-holder">How can I help you today?</div>
+        <div v-else>
+            <div class="welcome-title">Your personal AI helper</div>
+            <div class="place-holder">
+                <div class="select-title">Select and start</div>
+                <el-radio-group v-model="radio1">
+                    <el-radio value="gpt" size="large" border>Chat-GPT</el-radio>
+                    <el-radio value="claude" size="large" border>Claude</el-radio>
+                </el-radio-group>
+            </div>
+        </div>
         <div v-if="isLoading" class="loading-indicator">Loading...</div>
         <div class="chat-input">
-            <div class="flex flex-wrap gap-4 items-center">
-                <el-select v-model="value" class="model-select" laceholder="Select model" size="large"
-                    style="width: 240px">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
-                </el-select>
-            </div>
             <el-input style="min-width: 600px" type="text" v-model="newMessage" @keyup.enter="sendMessage"
                 placeholder="Type your message..." class="chat-input">
                 <template #append>
@@ -48,17 +51,7 @@ export default {
     data() {
         return {
             messages: [] as Messages[],
-            value: ref(''),
-            options: [
-                {
-                    value: 'gpt',
-                    label: 'gpt',
-                },
-                {
-                    value: 'claude',
-                    label: 'claude',
-                }
-            ],
+            radio1: ref('gpt'),
             newMessage: '',
             apiUrl: "/chat/send2openai",
             apiClaude: "/chat/send2claude",
@@ -73,16 +66,13 @@ export default {
     },
     methods: {
         async sendMessage() {
-            // 判断select不为空
-            if (this.value === "") {
-                ElMessage.error('Please Select')
-                return
-            }
             // 判断输入框不为空
             if (this.newMessage.trim() !== '') {
                 this.isLoading = true
+                console.log(this.radio1);
+
                 //判断选择的模型
-                switch (this.value) {
+                switch (this.radio1) {
                     case "gpt":
                         this.messages.push({ text: this.newMessage, isUser: true });
                         this.saveMsg.push({ role: "user", content: this.newMessage })
@@ -199,7 +189,17 @@ export default {
 }
 
 .chat-input {
-    display: flex;
-    width: 80%;
+    /* display: flex;
+    width: 80%; */
+}
+
+.welcome-title {
+    margin-bottom: 20px;
+    font-size: 30px;
+}
+
+.select-title {
+    margin-bottom: 20px;
+    margin-left: 66px;
 }
 </style>
