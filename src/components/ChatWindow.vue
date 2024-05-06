@@ -3,22 +3,25 @@
         <div class="messages" v-if="messages.length > 0">
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
-                {{ !message.isUser ? "GPT" : "You" }}
+                {{ !message.isUser ? radio1 : "You" }}
                 <span class="message-content">
                     {{ message.text }}
                 </span>
             </div>
         </div>
         <!-- Loading indicator -->
-        <div v-else class="place-holder">How can I help you today?</div>
+        <div v-else>
+            <div class="welcome-title">Your personal AI helper</div>
+            <div class="place-holder">
+                <div class="select-title">Select and start</div>
+                <el-radio-group v-model="radio1">
+                    <el-radio value="gpt" size="large" border>Chat-GPT</el-radio>
+                    <el-radio value="claude" size="large" border>Claude</el-radio>
+                </el-radio-group>
+            </div>
+        </div>
         <div v-if="isLoading" class="loading-indicator">Loading...</div>
         <div class="chat-input">
-            <div class="flex flex-wrap gap-4 items-center">
-                <el-select v-model="value" class="model-select" laceholder="Select model" size="large"
-                    style="width: 240px">
-                    <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
-                </el-select>
-            </div>
             <el-input style="min-width: 600px" type="text" v-model="newMessage" @keyup.enter="sendMessage"
                 placeholder="Type your message..." class="chat-input">
                 <template #append>
@@ -34,10 +37,10 @@
 </template>
 
 <script lang="ts">
-
 import axios from 'axios';
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/userStore';
 interface Messages {
     // id: number;
     text: string;
@@ -45,20 +48,14 @@ interface Messages {
 }
 
 export default {
+    setup() {
+        const UserStore = useUserStore()
+        axios.defaults.headers.common['Authorization'] = UserStore.session.token;
+    },
     data() {
         return {
             messages: [] as Messages[],
-            value: ref(''),
-            options: [
-                {
-                    value: 'gpt',
-                    label: 'gpt',
-                },
-                {
-                    value: 'claude',
-                    label: 'claude',
-                }
-            ],
+            radio1: ref('gpt'),
             newMessage: '',
             apiUrl: "/chat/send2openai",
             apiClaude: "/chat/send2claude",
@@ -73,16 +70,13 @@ export default {
     },
     methods: {
         async sendMessage() {
-            // 判断select不为空
-            if (this.value === "") {
-                ElMessage.error('Please Select')
-                return
-            }
             // 判断输入框不为空
             if (this.newMessage.trim() !== '') {
                 this.isLoading = true
+                console.log(this.radio1);
+
                 //判断选择的模型
-                switch (this.value) {
+                switch (this.radio1) {
                     case "gpt":
                         this.messages.push({ text: this.newMessage, isUser: true });
                         this.saveMsg.push({ role: "user", content: this.newMessage })
@@ -126,14 +120,41 @@ export default {
 
         // claude发送方式
         async handleClaudMessageSending() {
-            console.log(this.saveMsg);
-
             await axios.post('/chat/send2claude', {
                 model: this.CMDOEL,
                 max_tokens: 2059,
                 temperature: 0.1,
                 // prompt: this.newMessage,
                 messages: this.saveMsg
+                // messages: [
+                //     {
+                //         "role": "user",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "介绍一下你自己"
+                //             }
+                //         ]
+                //     },
+                //     {
+                //         "role": "assistant",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "当然可以"
+                //             }
+                //         ]
+                //     },
+                //     {
+                //         "role": "user",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "详细一些"
+                //             }
+                //         ]
+                //     },
+                // ]
             }).then((res) => {
                 console.log(res);
                 console.log(JSON.parse(res.data[1]));
@@ -143,7 +164,7 @@ export default {
                 this.saveMsg.push({ role: "system", content: claudeRes });
                 this.messages.push({ text: claudeRes, isUser: false });
             }).catch((error) => {
-                console.error('Error fetching response from ChatGPT API:', error);
+                console.error('Error fetching response from Claude API:', error);
                 this.messages.push({ text: 'Error fetching response from server', isUser: false });
             });
         }
@@ -199,7 +220,17 @@ export default {
 }
 
 .chat-input {
-    display: flex;
-    width: 80%;
+    /* display: flex;
+    width: 80%; */
+}
+
+.welcome-title {
+    margin-bottom: 20px;
+    font-size: 30px;
+}
+
+.select-title {
+    margin-bottom: 20px;
+    margin-left: 66px;
 }
 </style>
