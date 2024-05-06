@@ -149,7 +149,7 @@ const fakeLogin = () => userStore.fakeLogin();
                 </div>
                 <br>
                 <el-button type="primary" round @click="login">Login</el-button>
-                <el-button type="info" round @click="register">Register</el-button>
+                <el-button type="primary" round plain @click="register">Register</el-button>
             </el-card>
             <el-button type="warning" @click="logout">登出测试</el-button>
             <el-button type="warning" @click="session">session测试</el-button>

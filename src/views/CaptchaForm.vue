@@ -1,6 +1,6 @@
 <template>
     <div>
-        <img :src="captchaUrl" alt="Refresh too many times, pleas wait" @click="refreshCaptcha" />
+        <img :src="captchaUrl" alt="刷新次数过多,请稍候" @click="refreshCaptcha" />
         <el-input type="text" v-model="captchaInput" placeholder="Input captcha please"></el-input>
         <el-button type="primary" @click="submitForm">提交</el-button>
         <span v-if="isValidated">okay</span>
@@ -9,7 +9,6 @@
 
 <script setup lang="ts">
 import { useApiStore } from '@/stores/apiStore';
-import axios from 'axios';
 import { defineComponent, onMounted, ref } from 'vue';
 const apiStore = useApiStore();
 const baseUrl = apiStore.baseUrl;//get global url
@@ -30,20 +29,22 @@ onMounted(() => {
 
 function submitForm() {
     // 创建 FormData 对象
-    let formData = new FormData();
-    formData.append('captchaInput', captchaInput.value);
-
-    axios
-        .post(`/captcha`, formData)
-        .then((response) => {
-            isValidated.value = response.data;
-        })
-        .catch((error) => {
-            // 处理错误
-        });
+    if (captchaInput.value== getCookie('captcha')){
+        isValidated.value = true;
+    }
 }
 
 
+function captchaFromCookie() {
+    // 读取名为 "captcha" 的 Cookie
+    return getCookie('captcha');
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts: any = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
 
 defineComponent({
 

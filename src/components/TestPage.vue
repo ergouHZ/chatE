@@ -59,6 +59,22 @@ async function requestTest() {
                     "text": "详细一些" }
             ]
         },
+        {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "我可以做很多事" }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "具体有哪些" }
+            ]
+        }
         ]
     }).then((res) => {
         console.log(res.data[1]);
@@ -98,6 +114,8 @@ async function validateTest() {
     });
 
 }
+
+
 
 </script>
 
