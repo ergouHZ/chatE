@@ -37,10 +37,10 @@
 </template>
 
 <script lang="ts">
-
 import axios from 'axios';
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/userStore';
 interface Messages {
     // id: number;
     text: string;
@@ -48,6 +48,10 @@ interface Messages {
 }
 
 export default {
+    setup() {
+        const UserStore = useUserStore()
+        axios.defaults.headers.common['Authorization'] = UserStore.session.token;
+    },
     data() {
         return {
             messages: [] as Messages[],
@@ -116,14 +120,41 @@ export default {
 
         // claude发送方式
         async handleClaudMessageSending() {
-            console.log(this.saveMsg);
-
             await axios.post('/chat/send2claude', {
                 model: this.CMDOEL,
                 max_tokens: 2059,
                 temperature: 0.1,
                 // prompt: this.newMessage,
                 messages: this.saveMsg
+                // messages: [
+                //     {
+                //         "role": "user",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "介绍一下你自己"
+                //             }
+                //         ]
+                //     },
+                //     {
+                //         "role": "assistant",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "当然可以"
+                //             }
+                //         ]
+                //     },
+                //     {
+                //         "role": "user",
+                //         "content": [
+                //             {
+                //                 "type": "text",
+                //                 "text": "详细一些"
+                //             }
+                //         ]
+                //     },
+                // ]
             }).then((res) => {
                 console.log(res);
                 console.log(JSON.parse(res.data[1]));
@@ -133,7 +164,7 @@ export default {
                 this.saveMsg.push({ role: "system", content: claudeRes });
                 this.messages.push({ text: claudeRes, isUser: false });
             }).catch((error) => {
-                console.error('Error fetching response from ChatGPT API:', error);
+                console.error('Error fetching response from Claude API:', error);
                 this.messages.push({ text: 'Error fetching response from server', isUser: false });
             });
         }
