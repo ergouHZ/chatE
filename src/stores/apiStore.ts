@@ -2,8 +2,8 @@ import { defineStore } from 'pinia';
 
 export const useApiStore = defineStore('api', {
     state: () => ({
-        //baseUrl: 'https://chatserver.eeeegou.com',
-        baseUrl: 'http://localhost:8080',
+        baseUrl: 'https://chatserver.eeeegou.com',
+        //baseUrl: 'http://localhost:8080',
     }),
 })
 
