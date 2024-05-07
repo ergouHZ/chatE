@@ -3,13 +3,14 @@ import { defineStore } from "pinia";
 export const useUserStore = defineStore("store", {
   state: () => ({
     session: {
+      userId: null,
       username: null,
       password: "",
       isLoggedIn: false,
       permissions: [],
       roles: [],
       credits: "",
-      
+    
       expiresAt: null,
       thunmbnail: "",
 
@@ -34,6 +35,7 @@ export const useUserStore = defineStore("store", {
     //用户session存储在本地cookie
     afterLoginForm(user,token) {
       const session = {
+        userId: user.userId,
         username: user.username,
         password: user.password,
         isLoggedIn: true,
@@ -41,7 +43,7 @@ export const useUserStore = defineStore("store", {
         credits: user.credits,
         roles: user.roles,
         thumbnail: user.thumbnail,
-        expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为2周
+        expiresAt: new Date().getTime() + 21 * 24 * 3600 * 1000, // 令牌过期时间为3周
         
         token:token
       };
@@ -50,6 +52,7 @@ export const useUserStore = defineStore("store", {
 
     logout() {
       this.setSession({
+        userId: null,
         username: null,
         isLoggedIn: false,
         password: "",
@@ -72,6 +75,7 @@ export const useUserStore = defineStore("store", {
 
     fakeLogin() {
       const session = {
+        userId: 0,
         username: "test",
         isLoggedIn: true,
         password: "",
