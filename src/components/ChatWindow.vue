@@ -54,7 +54,7 @@ export default {
     },
     data() {
         return {
-            messages: [] as Messages[],
+            messages: [] as Messages[], // 页面展示的message
             radio1: ref('gpt'),
             newMessage: '',
             apiUrl: "/chat/send2openai",
@@ -99,8 +99,6 @@ export default {
         },
         // gpt发送方式
         async handleGptMessageSending() {
-            console.log(this.saveMsg);
-
             try {
                 const response = await axios.post(this.apiUrl, {
                     model: this.MODEL,
@@ -126,42 +124,13 @@ export default {
                 temperature: 0.1,
                 // prompt: this.newMessage,
                 messages: this.saveMsg
-                // messages: [
-                //     {
-                //         "role": "user",
-                //         "content": [
-                //             {
-                //                 "type": "text",
-                //                 "text": "介绍一下你自己"
-                //             }
-                //         ]
-                //     },
-                //     {
-                //         "role": "assistant",
-                //         "content": [
-                //             {
-                //                 "type": "text",
-                //                 "text": "当然可以"
-                //             }
-                //         ]
-                //     },
-                //     {
-                //         "role": "user",
-                //         "content": [
-                //             {
-                //                 "type": "text",
-                //                 "text": "详细一些"
-                //             }
-                //         ]
-                //     },
-                // ]
             }).then((res) => {
                 console.log(res);
                 console.log(JSON.parse(res.data[1]));
                 const claudeRes = JSON.parse(res.data[1]).content[0].text
-                console.log(JSON.parse(res.data[1]).content[0]);
+                const claudeResFormat = [{ type: "text", text: claudeRes }]
 
-                this.saveMsg.push({ role: "system", content: claudeRes });
+                this.saveMsg.push({ role: "assistant", content: claudeResFormat });
                 this.messages.push({ text: claudeRes, isUser: false });
             }).catch((error) => {
                 console.error('Error fetching response from Claude API:', error);
