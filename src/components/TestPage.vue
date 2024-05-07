@@ -35,46 +35,51 @@ async function requestTest() {
         max_tokens: 2059,
         temperature: 0.1,
         messages: [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "介绍一下你自己" }
-            ]
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "当然可以" }
-            ]
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "详细一些" }
-            ]
-        },
-        {
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "我可以做很多事" }
-            ]
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "具体有哪些" }
-            ]
-        }
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "介绍一下你自己"
+                    }
+                ]
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "当然可以"
+                    }
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "详细一些"
+                    }
+                ]
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "我可以做很多事"
+                    }
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "具体有哪些"
+                    }
+                ]
+            }
         ]
     }).then((res) => {
         console.log(res.data[1]);
@@ -88,6 +93,7 @@ async function requestTestGPT() {
         model: "gpt-3.5-turbo-0125",
         max_tokens: 800,
         temperature: 0.1,
+
         messages: [
             {
                 role: "user",
@@ -106,7 +112,7 @@ async function requestTestGPT() {
 }
 async function validateTest() {
     await axios.post(`chat/validate`, {
-        username:UserStore.session.username
+        username: UserStore.session.username
     }).then((res) => {
         console.log(res.data);
     }).catch((error) => {
@@ -115,7 +121,138 @@ async function validateTest() {
 
 }
 
+async function requestTestGPTStream() {
+    const response = await fetch('http://localhost:8080/chat/send2openai/stream', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': UserStore.session.token
+        },
+        body: JSON.stringify({
+            model: "gpt-3.5-turbo-0125",
+            max_tokens: 800,
+            temperature: 0.1,
+            stream: true,
+            messages: [
+                {
+                    role: "user",
+                    content: "介绍一下你自己"
+                }
+            ]
+        })
+    });
 
+    const reader = response.body!!.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let result = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+            if (line.startsWith('data:')) {
+                const data = line.slice(5).trim();
+                if (data === '[DONE]') {
+                    console.log('Stream completed');
+                    console.log('Final result:', result);
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices[0].delta.content;
+                    if (content) {
+                        result += content;
+                        console.log('Received:', content);
+                    }
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            }
+        }
+    }
+}
+
+async function requestTestStream() {
+    const response = await fetch('http://localhost:8080/chat/send2claude/stream', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': UserStore.session.token
+        },
+        body: JSON.stringify({
+            model: "claude-instant-1.2",
+            max_tokens: 800,
+            temperature: 0.1,
+            stream: true,
+            messages: [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "介绍一下你自己"
+                    }
+                ]
+            },
+            {
+                "role": "assistant",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "当然可以"
+                    }
+                ]
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": "详细一些"
+                    }
+                ]
+            }
+        ]
+        })
+    });
+
+    const reader = response.body!!.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let result = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const text = decoder.decode(value);
+        const lines = text.split('\n');
+
+        for (const line of lines) {
+            if (line.startsWith('data:')) {
+                const data = line.slice(5).trim();
+                if (data === '[DONE]') {
+                    console.log('Stream completed');
+                    console.log('Final result:', result);
+                    return;
+                }
+                try {
+                    const parsed = JSON.parse(data);
+                    const content = parsed.choices[0].delta.content;
+                    if (content) {
+                        result += content;
+                        console.log('Received:', content);
+                    }
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);
+                }
+            }
+        }
+    }
+}
 
 </script>
 
@@ -130,5 +267,7 @@ async function validateTest() {
         <el-button @click="requestTest" type="primary">claude发送测试</el-button>
         <el-button @click="validateTest" type="warning">验证测试</el-button>
         <el-button @click="requestTestGPT" type="info">gpt发送测试</el-button>
+        <el-button @click="requestTestStream" type="primary">claude流式测试</el-button>
+        <el-button @click="requestTestGPTStream" type="info">gpt流式测试</el-button>
     </div>
 </template>./view/BlogPost.vue
