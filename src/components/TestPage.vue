@@ -114,6 +114,7 @@ async function validateTest() {
     await axios.post(`chat/validate`, {
         username: UserStore.session.username
     }).then((res) => {
+        console.log(res);
         console.log(res.data);
     }).catch((error) => {
         console.log(error);
