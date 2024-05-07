@@ -41,7 +41,7 @@ export const useUserStore = defineStore("store", {
         credits: user.credits,
         roles: user.roles,
         thumbnail: user.thumbnail,
-        expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
+        expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为2周
         
         token:token
       };

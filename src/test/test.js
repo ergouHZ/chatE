@@ -1,23 +1,16 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-const anthropic = new Anthropic({
-  apiKey: "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", // defaults to process.env["ANTHROPIC_API_KEY"]
-});
+const openai = new OpenAI();
 
-const msg = await anthropic.messages.create({
-  model: "claude-instant-1.2",
-  max_tokens: 1519,
-  temperature: 0.1,
-  messages: [
-    {
-      "role": "user",
-      "content": [
-        {
-          "type": "text",
-          "text": "介绍一下你自己"
-        }
-      ]
+async function main() {
+    const stream = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [{ role: "user", content: "Say this is a test" }],
+        stream: true,
+    });
+    for await (const chunk of stream) {
+        process.stdout.write(chunk.choices[0]?.delta?.content || "");
     }
-  ]
-});
-console.log(msg);
+}
+
+main();
