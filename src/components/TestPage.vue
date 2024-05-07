@@ -122,7 +122,7 @@ async function validateTest() {
 }
 
 async function requestTestGPTStream() {
-    const response = await fetch('http://localhost:8080/chat/send2openai/stream', {
+    const response = await fetch('https://chatserver.eeeegou.com/chat/send2openai/stream', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

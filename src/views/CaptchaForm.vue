@@ -28,17 +28,14 @@ onMounted(() => {
 })
 
 function submitForm() {
-    // 创建 FormData 对象
+    console.log(captchaInput.value);
+    console.log(getCookie('captcha').value);
     if (captchaInput.value== getCookie('captcha')){
         isValidated.value = true;
+        console.log("valid!: "+isValidated.value);
     }
 }
 
-
-function captchaFromCookie() {
-    // 读取名为 "captcha" 的 Cookie
-    return getCookie('captcha');
-}
 
 function getCookie(name) {
     const value = `; ${document.cookie}`;
