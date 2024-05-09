@@ -7,12 +7,11 @@ export const useUserStore = defineStore("store", {
       username: null,
       password: "",
       isLoggedIn: false,
-      permissions: [],
-      roles: [],
-      credits: "",
-    
+      permissions: null,
+      roles: null,
+
+      credit: null,
       expiresAt: null,
-      thunmbnail: "",
 
       token:"",
     },
@@ -39,10 +38,9 @@ export const useUserStore = defineStore("store", {
         username: user.username,
         password: user.password,
         isLoggedIn: true,
-        permissions: user.authority,
-        credits: user.credits,
+        permissions: user.authority, //是否有权限
+        credit: user.credit,
         roles: user.roles,
-        thumbnail: user.thumbnail,
         expiresAt: new Date().getTime() + 21 * 24 * 3600 * 1000, // 令牌过期时间为3周
         
         token:token
@@ -56,10 +54,10 @@ export const useUserStore = defineStore("store", {
         username: null,
         isLoggedIn: false,
         password: "",
-        permissions: [],
-        roles: [],
-        credits: [],
-        thumbnail:"",
+        permissions: null,
+        roles: null,
+        credit: null,
+
         expiresAt: null,
         token:"",
       });
@@ -79,10 +77,10 @@ export const useUserStore = defineStore("store", {
         username: "test",
         isLoggedIn: true,
         password: "",
-        permissions: [1],
-        roles: [1],
+        permissions: 1,
+        roles: 1,
         credits: 10000,
-        thumbnail:"",
+
         expiresAt: new Date().getTime() + 14 * 24 * 3600 * 1000, // 令牌过期时间为1周
       };
       this.setSession(session);
