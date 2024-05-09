@@ -17,6 +17,7 @@
     "anthropic-ai": "^0.0.10",
     "axios": "^1.6.8",
     "element-plus": "^2.6.1",
+    "markdown-it": "^14.1.0",
     "openai": "^4.29.2",
     "pinia": "^2.1.7",
     "vue": "^3.4.21",
