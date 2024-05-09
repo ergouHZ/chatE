@@ -13,11 +13,11 @@
             您正在使用 {{ model }}
         </div>
         <!-- 是否展示loading -->
-        <div v-if="isLoading" class="loading-indicator">Loading...</div>
+        <div v-if="isLoading" class="loading-indicator">{{ model }} 正在思考...</div>
         <!-- chat input部分 -->
         <div class="chat-input">
             <el-input style="min-width: 600px" type="text" v-model="newMessage" :disabled="isLoading"
-                @keyup.enter="sendMessage" placeholder="今天可以怎么帮助你" class="chat-input">
+                @keyup.enter="sendMessage" placeholder="发送消息" class="chat-input">
                 <template #append>
                     <el-button :loading="isLoading" :disabled="isLoading" @click="sendMessage">
                         <el-icon class="el-icon--right">
@@ -54,13 +54,30 @@ export default {
             saveMsg: <any>[],
             isLoading: false,
             model: this.$route.query.model,  // 获取model
+            accStatus: 0
         };
     },
     setup() {
         const UserStore = useUserStore()
+        const username = UserStore.session.username
+        //通过映射来判断用户的权限
+        const permissionMapping = {
+            200: ['gpt', 'claude'],
+            201: ['gpt', 'claude'],
+        };
+        // 根据用户权限获取允许的模型列表
+        function getAllowedModels(userPermission) {
+            return permissionMapping[userPermission] || [];
+        }
+        // 检查用户是否有权限使用指定模型
+        function hasPermissionForModel(userPermission, model) {
+            const allowedModels = getAllowedModels(userPermission);
+            return allowedModels.includes(model);
+        }
         axios.defaults.headers.common['Authorization'] = UserStore.session.token;
         // 获取当前组件实例
         const instance = getCurrentInstance();
+
         // 在组件加载时执行一次 sendMessage 方法
         // onMounted(() => {
         //     // 从当前组件实例中获取 $route 和 sendMessage 方法
@@ -74,6 +91,24 @@ export default {
 
         //     }
         // });
+        onMounted(() => {
+            // 页面加载之后验证用户身份
+            const validate = async () => {
+                try {
+                    const response = await axios.post('/chat/validate', {
+                        username
+                    });
+                    const accStatus = response.data.status
+                    const res = hasPermissionForModel(accStatus, "gpt")
+                    console.log(res);
+                    
+
+                } catch (error) {
+                    console.error('Error fetching response from API:', error);
+                }
+            }
+            validate()
+        });
     },
     methods: {
         async sendMessage() {
