@@ -5,7 +5,13 @@
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
                 <span v-if="message.isUser" class="message-content">{{ message.text }}</span>
-                <span v-else class="message-content" v-markdown="message.text"></span>
+                <!-- 对于非用户消息 -->
+                <template v-else>
+                    <!-- 如果消息在实时流中，实时显示内容 -->
+                    <span v-if="isStreaming" class="message-content">{{ message.text }}</span>
+                    <!-- 非实时流的消息，显示处理后的内容（假设是 Markdown 内容） -->
+                    <span v-else class="message-content" v-markdown="message.text"></span>
+                </template>
             </div>
         </div>
         <!-- model使用部分 -->
@@ -31,10 +37,10 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios';
-import { onMounted, getCurrentInstance } from 'vue';
-import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/userStore';
+import axios from 'axios';
+import { getCurrentInstance } from 'vue';
+
 interface Messages {
     text: string;
     isUser: boolean;
@@ -42,6 +48,9 @@ interface Messages {
 
 
 export default {
+    mounted() {
+    },
+
 
     data() {
         return {
@@ -50,10 +59,11 @@ export default {
             apiUrl: "/chat/send2openai",
             apiClaude: "/chat/send2claude",
             MODEL: "gpt-3.5-turbo-0125",
-            CMDOEL: "claude-instant-1.2",
+            CMODEL: "claude-instant-1.2",
             saveMsg: <any>[],
             isLoading: false,
-            model: this.$route.query.model,  // 获取model
+            model: this.$route.query.model,  // 获取model,通过query获取参数
+            isStreaming: false, //是否在流式
         };
     },
     setup() {
@@ -71,7 +81,6 @@ export default {
         //     if (route?.query.message) {
         //         // sendMessage();
         //         console.log();
-
         //     }
         // });
     },
@@ -80,27 +89,84 @@ export default {
             // 判断输入框不为空
             if (this.newMessage.trim() !== '') {
                 this.isLoading = true
-                //判断选择的模型，根据模型选择不同的发送格式
-                switch (this.model) {
-                    case "gpt":
-                        this.messages.push({ text: this.newMessage, isUser: true });
-                        this.saveMsg.push({ role: "user", content: this.newMessage })
-                        await this.handleGptMessageSending()
-                        break;
-                    case "claude":
-                        this.messages.push({ text: this.newMessage, isUser: true });
-                        this.saveMsg.push({
-                            role: "user", content: [{ "type": "text", "text": this.newMessage }]
-                        })
-                        await this.handleClaudMessageSending()
-                        break;
-                    default:
-                        ElMessage.error('Please Select')
-                }
+                //把用户新输入的信息更新进页面上的队列中
+                this.messages.push({ text: this.newMessage, isUser: true });
+                //用户新输入的信息放入保存的消息列表，这个列表用于以后的发送
+                this.saveMsg.push({ role: "user", content: this.newMessage })
+                await this.requestTestGPTStream()
                 this.isLoading = false
                 this.newMessage = '';
             }
         },
+
+        async requestTestGPTStream() {
+
+            const UserStore = useUserStore()//获取用户session,获取token
+            const response = await fetch(
+                //'https://chatserver.eeeegou.com/chat/send2openai/stream'
+                'http://localhost:8080/chat/send2openai/stream'
+                , {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': UserStore.session.token //获取访问令牌
+                    },
+                    body: JSON.stringify({
+                        model: this.CMODEL,
+                        max_tokens: 800,
+                        temperature: 0.1,
+                        stream: true,
+                        messages: this.saveMsg
+                    })
+                });
+            this.messages.push({ text: '', isUser: false }); //队列加一条新消息开始传输
+            let currentMessageIndex = this.messages.length - 1; // 获取当前消息的索引
+            this.isStreaming = true; // 标记为实时更新 流式传输状态
+
+            const reader = response.body!!.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result = ''; //获取字符串
+            //解析并动态解析到返回流
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const text = decoder.decode(value);
+                const lines = text.split('\n');
+                for (const line of lines) {
+                    if (line.startsWith('data:')) {
+                        const data = line.slice(5).trim(); //去除data:{     ,解析剩下的内容}
+                        if (data === '[DONE]' || data === '{"type":"message_stop"}') { //信息获取完毕
+                            console.log('Stream completed');
+                            console.log('Final result:', result);
+                            this.saveMsg.push({ role: "assistant", content: result });//最后所有的信息更新进将来要一起发送的队列
+                            this.isStreaming = false;//结束流式
+                            return;
+                        }
+                        try {
+                            const parsed = JSON.parse(data);
+                            if (parsed.choices) { // 如果是第一种格式,即openai,deeepseek,按下面格式解析.因为两者返还不一样
+                                const content = parsed.choices[0].delta?.content;
+                                if (content) {
+                                    this.messages[currentMessageIndex].text += content; // 实时更新
+                                    result += content; //累计最后的结果
+                                    console.log('Received:', content);
+                                }
+                            } else if (parsed.delta && parsed.delta?.text) { // 如果是第二种格式,即claude,按下面格式解析
+                                const text = parsed.delta?.text;
+                                this.messages[currentMessageIndex].text += text;//页面上的最后一项，即正在更新的ai输入，实时更新
+                                result += text; //累计最后的结果
+                                console.log('Received:', text);
+                            }
+                        } catch (error) {
+                            console.error('Error parsing JSON:', error);
+                        }
+                    }
+                }
+            }
+        },
+
+
+
         // gpt发送方式
         async handleGptMessageSending() {
             try {
@@ -112,7 +178,7 @@ export default {
                     temperature: 0.1,
                 });
                 const serverMessage = JSON.parse(response.data[1]).choices[0].message.content.trim();
-                this.saveMsg.push({ role: "system", content: serverMessage });
+                this.saveMsg.push({ role: "assistant", content: serverMessage });
                 this.messages.push({ text: serverMessage, isUser: false });
             } catch (error) {
                 console.error('Error fetching response from ChatGPT API:', error);
@@ -123,7 +189,7 @@ export default {
         // claude发送方式
         async handleClaudMessageSending() {
             await axios.post('/chat/send2claude', {
-                model: this.CMDOEL,
+                model: this.CMODEL,
                 max_tokens: 2059,
                 temperature: 0.1,
                 // prompt: this.newMessage,
@@ -196,10 +262,15 @@ export default {
 .server-message {
     background-color: #f5f5f5;
     margin-bottom: 10px;
-    color: #000;
+    
     align-self: flex-start;
     border-radius: 10px;
     padding: 5px 20px;
+}
+
+.server-message pre code {
+    color: inherit;
+    /* 让代码块内的文字颜色继承自高亮库的设置*/
 }
 
 .chat-input {
@@ -211,5 +282,45 @@ export default {
 
 .loading-indicator {
     margin: 0 auto;
+}
+
+
+
+/* Visual Studio Theme */
+.hljs {
+    color: #dcdcdc;
+    background: #1e1e1e;
+}
+
+.hljs-keyword,
+.hljs-literal,
+.hljs-symbol,
+.hljs-name {
+    color: #569cd6;
+}
+
+.hljs-link {
+    color: #569cd6;
+    text-decoration: underline;
+}
+
+.hljs-built_in,
+.hljs-type {
+    color: #4ec9b0;
+}
+
+.hljs-number,
+.hljs-class {
+    color: #b8d7a3;
+}
+
+.hljs-string,
+.hljs-meta-string {
+    color: #d69d85;
+}
+
+.hljs-regexp,
+.hljs-template-tag {
+    color: #9a5334;
 }
 </style>
