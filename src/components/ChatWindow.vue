@@ -34,9 +34,9 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios';
-import { ref } from 'vue'
 import { useUserStore } from '@/stores/userStore';
+import axios from 'axios';
+import { ref } from 'vue';
 interface Messages {
     text: string;
     isUser: boolean;
