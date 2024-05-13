@@ -2,27 +2,25 @@
   <html>
 
   <body>
-    <div v-if="userSession.session.isLoggedIn" class="mainPage">
-      <PageHeader />
-      <el-container class="layout-container-demo" style="height: 100%">
-        <el-aside width="240px">
-          <NavMenu />
-        </el-aside>
 
-        <el-container>
-          <el-header style="text-align: right; font-size: 12px">
-          </el-header>
-          <el-main>
-            <RouterView />
-          </el-main>
+       <div v-if="userSession.session.isLoggedIn" class="mainPage">
+        <el-container class="layout-container-demo" style="height: 100%">
+          <el-aside width="240px">
+            <NavMenu />
+          </el-aside>
+          <el-container>
+            <el-header style="text-align: right; font-size: 12px">
+              <PageHeader />
+            </el-header>
+            <el-main>
+              <RouterView />
+            </el-main>
+          </el-container>
         </el-container>
-      </el-container>
     </div>
     <div v-if="!userSession.session.isLoggedIn" class="loginPage">
       <LoginForm />
     </div>
-
-   
 
   </body>
 
@@ -68,6 +66,7 @@ onBeforeMount(() => {
 
 .layout-container-demo .el-main {
   padding: 0;
+  border: none;
 }
 
 .layout-container-demo .toolbar {
@@ -79,7 +78,25 @@ onBeforeMount(() => {
 }
 
 html {
-  background-color: rgba(2, 107, 244, 0.177);
+  background-color: rgba(2, 135, 244, 0.177);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  border: none;
+  /* 或者 border: 0; */
 }
+
+html.dark {
+  padding: 0 !important;
+  border: 0 !important;
+  border: none !important;
+  /* 添加这一行 */
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+
 </style>
