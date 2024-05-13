@@ -5,7 +5,7 @@
     <div v-if="userSession.session.isLoggedIn" class="mainPage">
       <PageHeader />
       <el-container class="layout-container-demo" style="height: 100%">
-        <el-aside width="200px">
+        <el-aside width="240px">
           <NavMenu />
         </el-aside>
 
@@ -79,7 +79,7 @@ onBeforeMount(() => {
 }
 
 html {
-  background-color: rgba(29, 167, 241, 0.282);
+  background-color: rgba(2, 107, 244, 0.177);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 </style>
