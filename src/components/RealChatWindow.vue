@@ -80,6 +80,7 @@ export default {
         };
     },
     setup() {
+        //markdown中的渲染器，渲染代码块
         const md = new MarkdownIt({
             highlight: function (str, lang) {
                 if (lang && hljs.getLanguage(lang)) {
@@ -101,7 +102,7 @@ export default {
         });
 
         // 实例化Clipboard
-        const clipboardInstances:any = [];
+        const clipboardInstances: any = [];
         const copyButtons = document.querySelectorAll('.code-block-copy-button');
         copyButtons.forEach(button => {
             const clipboardInstance = new Clipboard(button);
@@ -114,6 +115,8 @@ export default {
             const dirtyHtml = md.render(text);
             return DOMPurify.sanitize(dirtyHtml);  // 清洗HTML内容
         };
+
+        //使用userstore获取令牌
         const UserStore = useUserStore()
         axios.defaults.headers.common['Authorization'] = UserStore.session.token;
         // 获取当前组件实例
@@ -131,6 +134,14 @@ export default {
         //     }
         // });
 
+        //控制器，用于控制是否用户中途离开
+        const controller = new AbortController();
+        const signal = controller.signal;
+        const result = ref(''); // 用于累积结果的变量
+
+        onBeforeUnmount(() => {
+            controller.abort(); // 取消fetch请求
+        });
         return {
             renderMarkdown,
         };
@@ -153,6 +164,9 @@ export default {
         //实时渲染到页面 并保留格式
 
         async requestTestGPTStream() {
+            // 创建一个AbortController实例
+            const controller = new AbortController();
+            const signal = controller.signal; //这个用于判断用户是否流式的过程中离开
 
             const UserStore = useUserStore()//获取用户session,获取token
             const response = await fetch(
@@ -165,13 +179,15 @@ export default {
                         'Authorization': UserStore.session.token //获取访问令牌
                     },
                     body: JSON.stringify({
-                        model: this.CMODEL,
+                        model: 'deepseek-coder',
                         max_tokens: 800,
                         temperature: 0.1,
                         stream: true,
                         messages: this.saveMsg
-                    })
+                    }),
+                    signal // 将signal传递给fetch请求
                 });
+
             this.messages.push({ text: '', isUser: false }); //队列加一条新消息开始传输
             let currentMessageIndex = this.messages.length - 1; // 获取当前消息的索引
             this.isStreaming = true; // 标记为实时更新 流式传输状态
@@ -213,53 +229,24 @@ export default {
                                 result += text; //累计最后的结果
                             }
                         } catch (error) {
-                            console.error('Error parsing JSON:', error);
+                            if (error.message === 'AbortError') {
+                                console.log('Request was aborted by the user.');
+                                // 发送包含当前结果的请求
+                                this.sendResultRequest(result);
+                            } else {
+                                console.error('An error occurred:', error);
+                            }
                         }
                     }
                 }
             }
+            this.sendResultRequest(result);
         },
 
-        // gpt发送方式
-        async handleGptMessageSending() {
-            try {
-                const response = await axios.post(this.apiUrl, {
-                    model: this.MODEL,
-                    prompt: this.newMessage,
-                    messages: this.saveMsg,
-                    max_tokens: 800,
-                    temperature: 0.1,
-                });
-                const serverMessage = JSON.parse(response.data[1]).choices[0].message.content.trim();
-                this.saveMsg.push({ role: "assistant", content: serverMessage });
-                this.messages.push({ text: serverMessage, isUser: false });
-            } catch (error) {
-                console.error('Error fetching response from ChatGPT API:', error);
-                this.messages.push({ text: 'Error fetching response from server', isUser: false });
-            }
+        sendResultRequest(result) {
+            // 发送包含当前结果的请求
+            // 你可以在这里添加代码来发送请求
         },
-
-        // claude发送方式
-        async handleClaudMessageSending() {
-            await axios.post('/chat/send2claude', {
-                model: this.CMODEL,
-                max_tokens: 2059,
-                temperature: 0.1,
-                // prompt: this.newMessage,
-                messages: this.saveMsg
-            }).then((res) => {
-                console.log(res);
-                console.log(JSON.parse(res.data[1]));
-                const claudeRes = JSON.parse(res.data[1]).content[0].text
-                const claudeResFormat = [{ type: "text", text: claudeRes }]
-
-                this.saveMsg.push({ role: "assistant", content: claudeResFormat });
-                this.messages.push({ text: claudeRes, isUser: false });
-            }).catch((error) => {
-                console.error('Error fetching response from Claude API:', error);
-                this.messages.push({ text: 'Error fetching response from server', isUser: false });
-            });
-        }
     }
 };
 </script>
@@ -341,7 +328,6 @@ export default {
     background-color: #77767662;
     /* 轻微的背景颜色 */
     border-top-left-radius: 4px;
-    /* 圆角效果 */
     border-top-right-radius: 4px;
     margin: 0px;
 }
@@ -351,16 +337,14 @@ export default {
     /* 加粗显示语言名称 */
 }
 
+/* 
+复制按钮 */
 .code-block-copy-button {
     padding: 5px 10px;
-    /* 按钮内边距 */
     background-color: #007bff;
-    /* 蓝色背景 */
     color: #ffffff;
-    /* 白色文本 */
     border: none;
     border-radius: 4px;
-    /* 圆角 */
     cursor: pointer;
     /* 鼠标悬停时显示手型指针 */
 }
