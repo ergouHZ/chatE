@@ -14,8 +14,7 @@
             </template>
             <el-menu-item-group>
                 <template #title><span>Group One</span></template>
-                <el-menu-item index="1-1">item one</el-menu-item>
-                <el-menu-item index="1-2">item two</el-menu-item>
+                <historyCard />
             </el-menu-item-group>
             <el-menu-item-group title="Group Two">
                 <el-menu-item index="1-3">item three</el-menu-item>
@@ -57,13 +56,14 @@ Setting
 } from '@element-plus/icons-vue';
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import historyCard from './historyCard.vue';
 
 defineProps<{
     title?: string
     likes?: number
 }>()
 
-const isCollapse = ref(true)
+const isCollapse = ref(false)
 const handleOpen = (key: string, keyPath: string[]) => {
     console.log(key, keyPath)
 }
@@ -79,7 +79,7 @@ const handleClose = (key: string, keyPath: string[]) => {
 
 <style>
 .el-menu-vertical-demo:not(.el-menu--collapse) {
-    width: 200px;
+    width: 240px;
     min-height: 400px;
 }
 </style>
