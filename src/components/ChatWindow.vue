@@ -21,10 +21,10 @@
             </el-input>
         </div>
         <div class="select-cards-container">
-            <el-card @click="handleClick('gpt')" class="select-card" shadow="hover">Chat-GPT</el-card>
-            <el-card @click="handleClick('claude')" class="select-card" shadow="hover">Claude</el-card>
-            <el-card class="select-card" shadow="hover">Hover</el-card>
-            <el-card class="select-card" shadow="hover">Hover</el-card>
+            <el-card @click="handleClick('gpt-3.5-turbo-0125')" class="select-card" shadow="hover">Chat-GPT 3.5</el-card>
+            <el-card @click="handleClick('claude-instant-1.2')" class="select-card" shadow="hover">Claude-Instant</el-card>
+            <el-card @click="handleClick('deepseek-chat')"class="select-card" shadow="hover">Deep seek Chat</el-card>
+            <el-card @click="handleClick('deepseek-coder')"class="select-card" shadow="hover">Deep seek Coder</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
@@ -71,7 +71,13 @@ export default {
             }
         },
         handleClick(model) {
-            this.$router.push({ path: '/chat-ai', query: { model: model, message: '' } });
+            this.$router.push({
+                path: '/chat-ai', query: {
+                    model: model,
+                    message: '',
+                    
+                }
+            });
             console.log(model);
 
         }
@@ -109,10 +115,7 @@ export default {
     margin-right: 10px;
 }
 
-.chat-input {
-    /* display: flex;
-    width: 80%; */
-}
+
 
 .welcome-title {
     margin-bottom: 20px;
