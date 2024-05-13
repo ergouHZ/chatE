@@ -1,4 +1,9 @@
 <template>
+    <!-- mark down 的主题 -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/vs.min.css"> -->
+
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/atom-one-dark.min.css">
     <div class="real-chat-container">
         <!-- 用户的message部分 -->
         <div class="messages" v-if="messages.length > 0">
@@ -7,10 +12,11 @@
                 <span v-if="message.isUser" class="message-content">{{ message.text }}</span>
                 <!-- 对于非用户消息 -->
                 <template v-else>
-                    <!-- 如果消息在实时流中，实时显示内容 -->
-                    <span v-if="isStreaming" class="message-content">{{ message.text }}</span>
+                    <span class="message-content" v-html="renderMarkdown(message.text)"></span>
+                    <!-- 如果消息在实时流中，且是最后一项，实时显示内容 -->
+                    <!-- <span v-if="isStreaming && index === messages.length - 1" class="message-content">{{ message.text }}</span> -->
                     <!-- 非实时流的消息，显示处理后的内容（假设是 Markdown 内容） -->
-                    <span v-else class="message-content" v-markdown="message.text"></span>
+                    <!-- <span v-else class="message-content" v-markdown="message.text"></span> -->
                 </template>
             </div>
         </div>
@@ -27,7 +33,7 @@
                 <template #append>
                     <el-button :loading="isLoading" :disabled="isLoading" @click="sendMessage">
                         <el-icon class="el-icon--right">
-                            <Upload />
+                            发送
                         </el-icon>
                     </el-button>
                 </template>
@@ -39,13 +45,18 @@
 <script lang="ts">
 import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
+//清洗markdown内容
+import DOMPurify from 'dompurify';
+//markdown里渲染代码块需要的
+import Clipboard from 'clipboard'; //提供代码粘贴板
+import hljs from 'highlight.js';
+import { default as MarkdownIt, default as markdownItHighlightjs } from 'markdown-it';
 import { getCurrentInstance } from 'vue';
 
 interface Messages {
     text: string;
     isUser: boolean;
 }
-
 
 export default {
     mounted() {
@@ -54,6 +65,8 @@ export default {
 
     data() {
         return {
+            markdownIt: new MarkdownIt(),  // 创建MarkdownIt实例
+
             messages: [] as Messages[], // 页面展示的message
             newMessage: '',
             apiUrl: "/chat/send2openai",
@@ -67,6 +80,40 @@ export default {
         };
     },
     setup() {
+        const md = new MarkdownIt({
+            highlight: function (str, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    const code = hljs.highlight(lang, str, true).value;
+                    const uniqueId = 'code-' + Date.now() + '-' + Math.floor(Math.random() * 1000); // 生成唯一ID
+                    const div = document.createElement('div');
+                    div.innerHTML = `<div class="code-block">
+                <div class="code-block-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="code-block-language">${lang}</span>
+                    <button class="code-block-copy-button" data-clipboard-target="#${uniqueId}">Copy</button>
+                </div>
+                <pre class="hljs"><code id="${uniqueId}">${code}</code></pre>
+            </div>`;
+
+                    return div.innerHTML;
+                }
+                return '<pre class="hljs"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+            }
+        });
+
+        // 实例化Clipboard
+        const clipboardInstances:any = [];
+        const copyButtons = document.querySelectorAll('.code-block-copy-button');
+        copyButtons.forEach(button => {
+            const clipboardInstance = new Clipboard(button);
+            clipboardInstances.push(clipboardInstance);
+        });
+
+        // 使用markdown-it-highlightjs插件
+        md.use(markdownItHighlightjs);
+        const renderMarkdown = (text) => {
+            const dirtyHtml = md.render(text);
+            return DOMPurify.sanitize(dirtyHtml);  // 清洗HTML内容
+        };
         const UserStore = useUserStore()
         axios.defaults.headers.common['Authorization'] = UserStore.session.token;
         // 获取当前组件实例
@@ -83,6 +130,10 @@ export default {
         //         console.log();
         //     }
         // });
+
+        return {
+            renderMarkdown,
+        };
     },
     methods: {
         async sendMessage() {
@@ -98,6 +149,8 @@ export default {
                 this.newMessage = '';
             }
         },
+
+        //实时渲染到页面 并保留格式
 
         async requestTestGPTStream() {
 
@@ -126,6 +179,7 @@ export default {
             const reader = response.body!!.getReader();
             const decoder = new TextDecoder('utf-8');
             let result = ''; //获取字符串
+
             //解析并动态解析到返回流
             while (true) {
                 const { done, value } = await reader.read();
@@ -135,11 +189,14 @@ export default {
                 for (const line of lines) {
                     if (line.startsWith('data:')) {
                         const data = line.slice(5).trim(); //去除data:{     ,解析剩下的内容}
-                        if (data === '[DONE]' || data === '{"type":"message_stop"}') { //信息获取完毕
+                        const trimmedData = data.replace(/\s+/g, ''); // 去除字符串中间的所有空格
+                        if (data === '[DONE]' || trimmedData === '{"type":"message_stop"}') { //信息获取完毕
+                            console.log('data: ' + data);
                             console.log('Stream completed');
                             console.log('Final result:', result);
                             this.saveMsg.push({ role: "assistant", content: result });//最后所有的信息更新进将来要一起发送的队列
                             this.isStreaming = false;//结束流式
+                            //this.handleScroll()
                             return;
                         }
                         try {
@@ -149,13 +206,11 @@ export default {
                                 if (content) {
                                     this.messages[currentMessageIndex].text += content; // 实时更新
                                     result += content; //累计最后的结果
-                                    console.log('Received:', content);
                                 }
                             } else if (parsed.delta && parsed.delta?.text) { // 如果是第二种格式,即claude,按下面格式解析
                                 const text = parsed.delta?.text;
                                 this.messages[currentMessageIndex].text += text;//页面上的最后一项，即正在更新的ai输入，实时更新
                                 result += text; //累计最后的结果
-                                console.log('Received:', text);
                             }
                         } catch (error) {
                             console.error('Error parsing JSON:', error);
@@ -164,8 +219,6 @@ export default {
                 }
             }
         },
-
-
 
         // gpt发送方式
         async handleGptMessageSending() {
@@ -262,15 +315,10 @@ export default {
 .server-message {
     background-color: #f5f5f5;
     margin-bottom: 10px;
-    
+
     align-self: flex-start;
     border-radius: 10px;
     padding: 5px 20px;
-}
-
-.server-message pre code {
-    color: inherit;
-    /* 让代码块内的文字颜色继承自高亮库的设置*/
 }
 
 .chat-input {
@@ -284,43 +332,54 @@ export default {
     margin: 0 auto;
 }
 
+/* 代码区块 */
+.code-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    background-color: #77767662;
+    /* 轻微的背景颜色 */
+    border-top-left-radius: 4px;
+    /* 圆角效果 */
+    border-top-right-radius: 4px;
+    margin: 0px;
+}
 
+.code-block-language {
+    font-weight: bold;
+    /* 加粗显示语言名称 */
+}
 
-/* Visual Studio Theme */
+.code-block-copy-button {
+    padding: 5px 10px;
+    /* 按钮内边距 */
+    background-color: #007bff;
+    /* 蓝色背景 */
+    color: #ffffff;
+    /* 白色文本 */
+    border: none;
+    border-radius: 4px;
+    /* 圆角 */
+    cursor: pointer;
+    /* 鼠标悬停时显示手型指针 */
+}
+
+.code-block-copy-button:hover {
+    background-color: #0056b3;
+    /* 鼠标悬停时的背景颜色 */
+}
+
 .hljs {
-    color: #dcdcdc;
-    background: #1e1e1e;
+    margin-top: 0;
+    /* 移除上部的margin，让标题和代码块更紧凑 */
+    padding: 0;
 }
 
-.hljs-keyword,
-.hljs-literal,
-.hljs-symbol,
-.hljs-name {
-    color: #569cd6;
-}
-
-.hljs-link {
-    color: #569cd6;
-    text-decoration: underline;
-}
-
-.hljs-built_in,
-.hljs-type {
-    color: #4ec9b0;
-}
-
-.hljs-number,
-.hljs-class {
-    color: #b8d7a3;
-}
-
-.hljs-string,
-.hljs-meta-string {
-    color: #d69d85;
-}
-
-.hljs-regexp,
-.hljs-template-tag {
-    color: #9a5334;
+pre,
+code {
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
 }
 </style>
