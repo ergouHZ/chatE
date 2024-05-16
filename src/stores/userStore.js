@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 
+
 export const useUserStore = defineStore("store", {
   state: () => ({
     session: {
@@ -13,7 +14,9 @@ export const useUserStore = defineStore("store", {
       credit: null,
       expiresAt: null,
 
-      token:"",
+      token:"", //服务器令牌
+
+      isUpdating: false//监测是否有新输入
     },
   }),
   actions: {
@@ -60,8 +63,10 @@ export const useUserStore = defineStore("store", {
 
         expiresAt: null,
         token:"",
-      });
 
+        
+      });
+      this.session.isUpdating = true
       localStorage.removeItem("session"); // 清除本地存储
       const session = JSON.parse(localStorage.getItem("session"));
     },
