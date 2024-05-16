@@ -25,8 +25,8 @@
             <el-card @click="handleClick('claude-instant-1.2')" class="select-card" shadow="hover">Claude-Instant</el-card>
             <el-card @click="handleClick('deepseek-chat')"class="select-card" shadow="hover">Deep seek Chat</el-card>
             <el-card @click="handleClick('deepseek-coder')"class="select-card" shadow="hover">Deep seek Coder</el-card>
-            <el-card class="select-card" shadow="hover">Hover</el-card>
-            <el-card class="select-card" shadow="hover">Hover</el-card>
+            <el-card @click="handleClick('gpt-4o-2024-05-13')" class="select-card" shadow="hover">gpt-4o</el-card>
+            <el-card @click="handleClick('claude-3-sonnet-20240229')" class="select-card" shadow="hover">claude-3-sonnet</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
         </div>
