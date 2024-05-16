@@ -1,43 +1,32 @@
 <template>
-  <html>
 
+  <html v-if="userSession.session.isLoggedIn">
   <body>
-
-       <div v-if="userSession.session.isLoggedIn" class="mainPage">
-        <el-container class="layout-container-demo" style="height: 100%">
-          <el-aside width="240px">
-            <NavMenu />
-          </el-aside>
-          <el-container>
-            <el-header style="text-align: right; font-size: 12px">
-              <PageHeader />
-            </el-header>
-            <el-main>
-              <RouterView />
-            </el-main>
-          </el-container>
+      <el-container class="layout-container-demo" style="height: 100vh">
+        <NavMenu />
+        <el-container>
+          <el-main style="height: 100vh; overflow: auto">
+            <RouterView />
+          </el-main>
         </el-container>
-    </div>
-    <div v-if="!userSession.session.isLoggedIn" class="loginPage">
-      <LoginForm />
-    </div>
-
+      </el-container>
   </body>
-
+  </html>
+  <html v-else>
+    <RouterView />
   </html>
 </template>
 
 <script lang="ts" setup>
-import { RouterView } from 'vue-router';
-import LoginForm from './components/LoginForm.vue';
+import axios from 'axios';
+import { RouterView, useRouter } from 'vue-router';
 import { useApiStore } from './stores/apiStore';
 import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
-import PageHeader from './views/PageHeader.vue';
 
+const router = useRouter()
 const apiStore = useApiStore();
 const baseUrl = apiStore.baseUrl;//get global url
-
 const userSession = useUserStore();
 
 onBeforeMount(() => {
@@ -45,19 +34,42 @@ onBeforeMount(() => {
   console.log(userSession.session);
 })
 
+onMounted(() => {
+  renewUserSession()
+});
 
+async function renewUserSession() {
+  await axios.post('/user/login', {
+    username: userSession.session.username,
+    password: userSession.session.password,
+  })
+    .then((res) => {
+      userSession.afterLoginForm(res.data.data, res.data.token);//手动登录或注册后，存入用户信息到session
+      console.log(res.data.message)
+    })
+    .catch((error) => {
+      console.log(error.response.data.error)
+      error.value = error.response.data.error
+    })
+}
+
+
+router.beforeEach((to, from, next) => {
+  const isLoggedIn = userSession.session.isLoggedIn;
+  if (to.matched.some(record => record.meta.requiresAuth) && !isLoggedIn) {
+    next({ path:'/user' });
+  } else {
+    next();
+  }
+});
 </script>
 
 <style scoped>
 .layout-container-demo .el-header {
   position: relative;
-  background-color: var(--el-color-primary-light-8);
-  color: var(--el-text-color-secondary);
 }
 
 .layout-container-demo .el-aside {
-  color: var(--el-text-color-primary);
-  background: var(--el-color-primary-light-4);
 }
 
 .layout-container-demo .el-menu {
@@ -67,6 +79,7 @@ onBeforeMount(() => {
 .layout-container-demo .el-main {
   padding: 0;
   border: none;
+
 }
 
 .layout-container-demo .toolbar {
@@ -76,27 +89,4 @@ onBeforeMount(() => {
   height: 100%;
   right: 20px;
 }
-
-html {
-  background-color: rgba(2, 135, 244, 0.177);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  padding: 0;
-  border: none;
-  /* 或者 border: 0; */
-}
-
-html.dark {
-  padding: 0 !important;
-  border: 0 !important;
-  border: none !important;
-  /* 添加这一行 */
-}
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-
 </style>
