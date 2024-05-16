@@ -4,7 +4,7 @@ import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
 import { reactive, ref } from 'vue';
 import BlogPost from '../views/BlogPost.vue';
-import historyCard from './../views/historyCard.vue'
+
 
 const state = reactive({
     circleUrl:
@@ -45,7 +45,6 @@ function oukei() {
 </script>
 
 <template>
-    <historyCard />
     <div class="ai-model-avatar">
         <el-avatar shape="square" :size="36" :src="squareUrl" />
         
