@@ -6,13 +6,22 @@
 
 .model-avatar {
     align-items: center;
-    margin: 10px;
-    margin-right: 0;
+    margin: 8px;
+    margin-right: 5px;
+    margin-left: 4px;
+    margin-bottom: 0;
+}
+
+/* 本体 */
+.message-card {
+    padding: 0;
+    margin-bottom: 0.8px;
+    max-width: 260px;
 }
 
 .message-content-container {
     flex: 1;
-    padding: 5px;
+    padding: 0px;
 }
 
 .message-header {
@@ -24,73 +33,90 @@
     /* 确保不换行 */
 }
 
-.model-name {
+.model-name-in-card {
     margin: 0;
-    font-size: small;
-    flex: 0 0 auto;
+    font-size:10px;
+    flex: 1 0.4 auto;
     /* 确保占据剩余空间 */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: 110px
 }
 
 .message-date {
+    font-size: small;
     margin: 0;
     color: #99999992;
-    flex: 1 1 auto;
-    margin-left: 10px;
+    flex: 0.1 1 auto;
+    margin-left: 0px;
     /* 添加一些间距 */
 }
 
 .message-content {
-    font-weight: bold;
+    /* font-weight: bold; */
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     margin: 3px;
     margin-left: 0;
     font-size: small;
-    width: 220px;
+    width: 250px;
 }
 
 .right-icon {
-    margin-left: 10px;
+    margin-left: 0px;
     scale: 0.8;
-    flex: 1 0 auto;
+    flex: 2 1 auto;
+}
+
+.message-card:hover {
+    box-shadow: 0 2px 12px 0 #376ca4;
+    transition: box-shadow 0.3s ease;
+    color: #b1b3b8;
+}
+
+.right-icon:hover {
+    color: #ff4949;
+    /* 设置悬停时的颜色 */
+    cursor: pointer;
+    /* 设置鼠标指针为手型 */
+    transition: color 0.3s ease;
+    /* 添加过渡效果 */
 }
 </style>
 
 <template>
     <div>
-        <el-card v-for="message in messages" :key="message.id" class="message-card" :body-style="{ padding: '0' }">
-            <div class="message-container">
+        <div v-for="window in props.windows" :key="window.id" class="message-card" :body-style="{ padding: '0' }">
+            <div class="message-container" @click="handleClick(window.id, window.name)">
                 <div class="model-avatar">
-                    <el-avatar shape="square" :size="36" :src="changeToThumb(message.avatar)" />
+                    <el-avatar shape="square" :size="36" :src="changeToThumb(window.name)" />
                 </div>
                 <div class="message-content-container">
                     <div class="message-header">
-                        <p class="model-name">{{ message.name }}</p>
-                        <p class="message-date">{{ formatDate(message.date) }}</p>
+                        <p class="model-name-in-card">{{modifyName(window.name)}}</p>
+                        <p class="message-date">{{ formatDate(window.date) }}</p>
                         <!-- 删除按钮 -->
-                        <div class="right-icon" @click="dialogVisible = true"><el-icon>
+                        <div class="right-icon" @click.stop="onHandleDelete(window.id)"><el-icon>
                                 <Delete />
                             </el-icon></div>
                     </div>
-                    <p class="message-content">{{ message.content }}</p>
+                    <p class="message-content">{{ window.content }}</p>
                 </div>
             </div>
-            <el-dialog v-model="dialogVisible" title="Alert" width="500">
+            <el-dialog v-model="dialogVisible[window.id]" title="Alert" width="500">
                 <span>确定删除这一条记录吗</span>
                 <template #footer>
                     <div class="dialog-footer">
-                        <el-button @click="dialogVisible = false">取消</el-button>
-                        <el-button type="primary" @click="handleDelete(message.id)">
+                        <el-button @click="dialogVisible[window.id] = false">取消</el-button>
+                        <el-button type="primary" @click="handleDelete(window.id)">
                             确定
                         </el-button>
                     </div>
                 </template>
             </el-dialog>
-        </el-card>
+        </div>
     </div>
 
 
@@ -102,25 +128,28 @@
 import {
 Delete
 } from '@element-plus/icons-vue';
-import { ref } from 'vue';
+import axios from 'axios';
+import { ElLoading, ElNotification } from 'element-plus';
+import { defineProps, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/userStore';
+import { changeToThumb, modifyName } from '../utils';
 
-const dialogVisible = ref(false)
-const messages = ref([
-    {
-        id: 1,
-        avatar: 'gpt-3.5-turbo-0125',
-        name: 'Model A',
-        date: '2023-04-20',
-        content: 'Hello, how are you?'
-    },
-    {
-        id: 2,
-        avatar: 'claude-instant-1.2',
-        name: 'Model B',
-        date: '2023-04-21',
-        content: 'I am doing well, thank you for asking222222222222222222222222222222222222222222222.'
-    }
-])
+const userStore = useUserStore();
+const router = useRouter()
+//给下面的props提供一个接口
+interface Window {
+    id: string | number;
+    name: string;
+    content: string;
+    date: string;
+}
+
+const props = defineProps<{
+    windows: Window[];
+}>();
+
+
 
 const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -128,21 +157,72 @@ const formatDate = (dateString) => {
     const day = String(date.getDate()).padStart(2, '0')
     return `${month}-${day}`
 }
+const dialogVisible = ref({})
+const onHandleDelete = (id) => {
+    dialogVisible.value[id] = true
 
-
-const changeToThumb = (modelName) => {
-    if (modelName === 'claude-instant-1.2') {
-        return 'https://qph.cf2.poecdn.net/main-thumb-pb-1011-200-phggnnskbfadkgntvkacpazkogidumhg.jpeg'
-    } else if (modelName === 'gpt-3.5-turbo-0125') {
-        return 'https://qph.cf2.poecdn.net/main-thumb-pb-3004-200-jougqzjtwfqfyqprxbdwofvnwattmtrg.jpeg'
-    }
-    // 如果没有匹配的模型名称，可以返回一个默认图片或者空字符串
-    return ''
 }
-
 const handleDelete = (id) => {
-    console.log(id)
-    dialogVisible.value=false
+    dialogVisible.value[id] = false
+    deleteWindowContent(id)
+    
 }
 
+//点击的时候传输modelname 和窗口id
+const handleClick = (id, model) => {
+    const targetPath = `/chat-ai?windowId=${id}&model=${model}`;
+    router.push({
+        path: '/chat-ai',
+        query: {
+            model: model,
+            windowId: id,
+        }
+    });
+};
+
+//发送删除信息
+async function deleteWindowContent(messageBoxId) {
+    const loading = ElLoading.service({
+        lock: false,
+        text: 'Loading',
+        background: 'rgba(0, 0, 0, 0.5)',
+    })
+    try {
+        const response = await axios.post('/message/window/delete', null, {
+            params: {
+                messageBoxId: messageBoxId,
+            },
+        });
+        if (response.data.status === 200) {
+            ElMessage.success('删除成功')
+        } else if (response.data.status === 201) {
+            ElNotification({
+                title: 'warning',
+                message: 'No message found',
+                type: 'warning',
+            })
+            console.log("window success: no message " + response.data.message);
+        } else {
+            ElNotification({
+            title: 'Error',
+            message: 'Empty response',
+            type: 'error',
+        })
+        }
+    } catch (error) {
+        ElNotification({
+            title: 'Error',
+            message: 'Empty response',
+            type: 'error',
+        })
+        console.error('Error fetching message content:', error);
+    } finally {
+        userStore.session.isUpdating=true;
+        setTimeout(() => {
+            //scrollToBottomWhenInit(); //更新完之后滚到底部
+            loading.close()
+        }, 150)
+
+    }
+}
 </script>
