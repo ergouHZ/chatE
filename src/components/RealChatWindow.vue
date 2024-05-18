@@ -34,14 +34,18 @@
         <div class="chat-input-container">
             <el-input v-loading="isLoading" v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
                 :autosize="{ minRows: 4, maxRows: 7 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
-                :disabled="isLoading" @keyup.enter="sendMessage">
+                :disabled="isLoading" @keydown="handleKeyDown">
+                <!-- @keyup.enter="sendMessage" -->
             </el-input>
-            <el-button v-if="!isLoading" :loading="isLoading" :disabled="isLoading" @click="sendMessage">
-                发送
-                <el-icon class="el-icon--right">
-                    <ArrowRight />
-                </el-icon>
-            </el-button>
+            <div v-if="!isLoading">
+                <el-button :loading="isLoading" :disabled="isLoading" @click="sendMessage">
+                    发送
+                    <el-icon class="el-icon--right">
+                        <ArrowRight />
+                    </el-icon>
+                </el-button>
+                <p style="font-size: smaller;margin: 0;">Ctrl + Enter</p>
+            </div>
             <el-button v-if="isLoading" :disabled="!isLoading" @click="abortMessage">
                 停止
                 <el-icon class="el-icon--right">
@@ -81,7 +85,7 @@ const saveMsg = ref<any>([]); //需要发送的主体
 
 const isLoading = ref(false);
 const isUserScrolling = ref(false); //如果用户滚动，则不需要自动滚动
-const INPUT_EVENT_MAX_LENGTH = ref(4000 ); //限制输入
+const INPUT_EVENT_MAX_LENGTH = ref(4000); //限制输入
 const newMessage = ref(''); //此为用户输入
 
 const isImageGenerated = ref(false); //当前是否图片模型，默认否，当是图片的时候才显示.当进入图片聊天框时，自动为真
@@ -245,7 +249,7 @@ const decryptThePath = async (codePath) => {
 
     if (model.value == 'dall-e-3' || model.value == 'dall-e-2' || model.value == 'sd3') {
         isImageGenerated.value = true
-        
+
     }
     console.log("model: " + model.value);
 }
@@ -254,9 +258,18 @@ const abortMessage = () => {
     if (isLoading) { controller.value.abort(); }
 }
 
+function handleKeyDown(e) {
+    if (e.ctrlKey && e.key === 'Enter') {
+        sendMessage();  //发送快捷键 ctrl+enter
+    }
+    if (e.esc) { abortMessage(); }
+}
 // 发送消息的方法
+// var iconv = require('iconv-lite');
+// var str = "Hello, 世界";
+// var byteCount = iconv.encode(str, 'utf-8').length; // 结果为13  计算字节方法
 const sendMessage = async () => {
-    if (newMessage.value.trim() !== '' && newMessage.value.length<= INPUT_EVENT_MAX_LENGTH.value) {
+    if (newMessage.value.trim() !== '' && newMessage.value.length <= INPUT_EVENT_MAX_LENGTH.value) {
         if (saveMsg.value.length == 0) { //如果是第一条消息
             await createChatWindow()
         }
@@ -281,10 +294,10 @@ const sendMessage = async () => {
         }
         isLoading.value = false;
         newMessage.value = '';
-    } else{
+    } else {
         ElNotification({
             title: 'Warning',
-            message: '目前本窗口输入限制在4000字以下',
+            message: '请输入文字',
             type: 'error',
         })
     }
@@ -340,8 +353,8 @@ const requestTestGPTStream = async () => {
             },
             body: JSON.stringify({
                 model: model.value,
-                max_tokens: 2400,
-                temperature: 0.6,
+                max_tokens: 2800,
+                //temperature: 0.6,
                 stream: true,
                 messages: saveMsg.value,
                 signal: signal // 将signal传递给fetch请求
@@ -538,10 +551,10 @@ const requestImageFormDalle = async (model) => {
             sendResultRequest(newMessage.value, responseMsg, imageUrl);
         }
         ElNotification({
-                title: '提示',
-                message: '此模型下图片请尽快保存,10分钟后图片将有可能失效',
-                type: 'warning',
-            })
+            title: '提示',
+            message: '此模型下图片请尽快保存,10分钟后图片将有可能失效',
+            type: 'warning',
+        })
     } catch (error) {
         if (model == 'sd3') {
             ElNotification({
