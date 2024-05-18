@@ -16,7 +16,9 @@ export const useUserStore = defineStore("store", {
 
       token:"", //服务器令牌
 
-      isUpdating: false//监测是否有新输入
+      isUpdating: false,//监测是否有新窗口创建
+      isNavToNewWindow: false, //是否需要切换到新窗口，新窗口创建时，发送消息结束后设置此值，自动切换
+      isInHistoryList:false, //是否从历史页面切到了其他页面
     },
   }),
   actions: {

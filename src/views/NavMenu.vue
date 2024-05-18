@@ -1,6 +1,7 @@
 <template>
     <el-menu default-active="10" class="el-menu-vertical-demo" :collapse="isCollapse" @open="handleOpen"
-        @close="handleClose">
+        @close="handleClose"
+        >
 
         <el-button @click="toggleCollapse" style="margin-bottom: 5px;width: 64px;border: 1.5px solid #71707073 ;height: 40px;">
             <el-icon v-if="isCollapse">
@@ -35,7 +36,7 @@
             <!-- <div class="histories-window">
                 <historyCard :windows="windows" />
             </div> -->
-            <el-scrollbar class="messages-history-window">
+            <el-scrollbar class="messages-history-window" height="45vh">
                 <div class="card-scroll-bar">
                     <historyCard :windows="windows" />
                 </div>
@@ -118,12 +119,9 @@ import { useUserStore } from '../stores/userStore';
 import historyCard from './historyCard.vue';
 
 const fits = 'contain'
-const url =
-    '../../public/brand.png'
-
+const url ='/brand.png'
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
-
 const userStore = useUserStore();
 
 interface Window {
@@ -211,10 +209,8 @@ const handleResize = () => {
     const windowWidth = window.innerWidth
     if (windowWidth < 1090) {
         isCollapse.value = true
-
     } else {
         isCollapse.value = false
-
     }
 }
 </script>
@@ -257,8 +253,7 @@ const handleResize = () => {
 }
 
 .messages-history-window {
-    flex: 1;
-    height: 40vh;
+    /* flex: 1; */
 }
 
 /* menu的hover */

@@ -10,6 +10,10 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
+import "./styles/index.scss"
+
+
+
 // 在 main.js 或其他 Vue 入口文件中引入 markdown-it 库
 import MarkdownIt from 'markdown-it'
 // 创建一个 Markdown 解析器实例
@@ -33,17 +37,3 @@ axios.defaults.baseURL = 'http://localhost:8080';
 //axios.defaults.baseURL = 'https://chatserver.eeeegou.com';
 axios.defaults.withCredentials=true;  //携带cookie
 /* axios.defaults.headers.common['authorization'] = 'aoiodiqjono1n24oi15on6o1n62ion62n4jk1n4j1n5k32naogoani2on5i2'; */
-
-
-const style = document.createElement('style');
-style.innerHTML = `
-  html, body, #app {
-    margin: 0;
-    padding: 0;
-    border: none; /* 确保这些元素没有边框 */
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-  }
-`;
-document.head.appendChild(style);

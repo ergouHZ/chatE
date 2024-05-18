@@ -65,7 +65,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-
+  base: '', //静态资源环境
 })
 
 // vite.config.ts

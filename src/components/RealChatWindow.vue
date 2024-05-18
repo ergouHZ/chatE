@@ -15,9 +15,12 @@
                 <template v-else>
                     <div class="model-info">
                         <el-avatar class="model-avatar" shape="circle" :size="36" :src="changeToThumb(model)" />
-
                     </div>
                     <span class="message-content" v-html="renderMarkdown(message.text)"></span>
+                    <!-- 图片生成的展示 -->
+                    <div v-if="message.url" class="demo-image">
+                        <el-image style="width: 100%; height: 100%" :src="message.url" fit="contain" />
+                    </div>
                 </template>
             </div>
         </div>
@@ -29,7 +32,7 @@
         <!--     <div v-if="isLoading" class="loading-indicator">Loading...</div> -->
         <!-- chat input部分 -->
         <div class="chat-input-container">
-            <el-input v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
+            <el-input v-loading="isLoading" v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
                 :autosize="{ minRows: 4, maxRows: 7 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
                 :disabled="isLoading" @keyup.enter="sendMessage">
             </el-input>
@@ -65,21 +68,25 @@ import { ElLoading, ElNotification } from 'element-plus';
 import hljs from 'highlight.js';
 import { default as MarkdownIt, default as markdownItHighlightjs } from 'markdown-it';
 import { ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 
 interface Messages {
     text: string;
     isUser: boolean;
+    url?: string;
 }
 const messages = ref<Messages[]>([]); //页面上显示的列表
 const MAX_LENGTH = 7; // 设置最大长度为 8，这个是发送的最大的队列数
 const saveMsg = ref<any>([]); //需要发送的主体
-const newMessage = ref(''); //此为用户输入
+
 const isLoading = ref(false);
 const isUserScrolling = ref(false); //如果用户滚动，则不需要自动滚动
+const INPUT_EVENT_MAX_LENGTH = ref(4000 ); //限制输入
+const newMessage = ref(''); //此为用户输入
+
+const isImageGenerated = ref(false); //当前是否图片模型，默认否，当是图片的时候才显示.当进入图片聊天框时，自动为真
 
 const route = useRoute();
-const router = useRouter();
 
 //获取传输参数
 const secretKey = 'asdhiu(2398*&*(8213has^72*7^%' //防君子不防小人，真正的信息获取办法在服务器里面，这个只是给路径上遮罩
@@ -90,8 +97,9 @@ const isStreaming = ref(false);
 const clearData = () => {
     messages.value = [];
     saveMsg.value = [];
+    isImageGenerated.value = false;
 }
-// 创建一个ref来引用容器元素
+// 创建一个ref来引用容器元素 ，这是聊天主题的引用
 const containerRef = ref<HTMLElement | null>(null);
 
 // 滚动到容器底部的函数，有点太花了，暂时先不用
@@ -207,6 +215,9 @@ onMounted(() => {
     if (windowId.value) {
         getMessageContent(windowId.value);
     }
+    if (model.value == 'dall-e-3' || model.value == 'dall-e-2' || model.value == 'sd3') {
+        isImageGenerated.value = true
+    } //挂载时也要设置，在路由里设置第一次点进来没用
 });
 
 // 在组件卸载前的方法
@@ -231,6 +242,12 @@ const decryptThePath = async (codePath) => {
 
     model.value = modelInPath //赋值
     windowId.value = windowInPath
+
+    if (model.value == 'dall-e-3' || model.value == 'dall-e-2' || model.value == 'sd3') {
+        isImageGenerated.value = true
+        
+    }
+    console.log("model: " + model.value);
 }
 
 const abortMessage = () => {
@@ -239,10 +256,9 @@ const abortMessage = () => {
 
 // 发送消息的方法
 const sendMessage = async () => {
-    if (newMessage.value.trim() !== '') {
+    if (newMessage.value.trim() !== '' && newMessage.value.length<= INPUT_EVENT_MAX_LENGTH.value) {
         if (saveMsg.value.length == 0) { //如果是第一条消息
-            console.log(model.value);
-            createChatWindow()
+            await createChatWindow()
         }
         isLoading.value = true;
         messages.value.push({ text: newMessage.value, isUser: true }); //显示的内容
@@ -252,12 +268,25 @@ const sendMessage = async () => {
             saveMsg.value.shift();
             saveMsg.value.shift();
         }
-        saveMsg.value.push({ role: 'user', content: newMessage.value });//发送的内容
-        console.log("the sagemessage:" + saveMsg.value[0].content)
         scrollToBottom();
-        await requestTestGPTStream();
+        if (isImageGenerated.value) {
+            console.log("model is: " + isImageGenerated.value);
+            console.log("send", isImageGenerated.value);
+            //如果是图片模型
+            await requestImageFormDalle(model.value);
+        } else {
+            saveMsg.value.push({ role: 'user', content: newMessage.value });//发送的内容
+            //发送流式到客户端，非图片模型的方法
+            await requestTestGPTStream();
+        }
         isLoading.value = false;
         newMessage.value = '';
+    } else{
+        ElNotification({
+            title: 'Warning',
+            message: '目前本窗口输入限制在4000字以下',
+            type: 'error',
+        })
     }
 };
 
@@ -271,10 +300,8 @@ async function createChatWindow() {
 
         // 处理响应数据
         if (response.data.success) {
-            console.log('Chat window created with ID:', response.data.data);
             windowId.value = response.data.data; // 返回聊天框ID
-            UserStore.session.isUpdating = true; //通知客户端有记录更新
-            console.log("new chat window updated:");
+            UserStore.session.isUpdating = true; //通知客户端有记录更新，此时聊天窗口会切换
         } else {
             ElNotification({
                 title: 'Warning',
@@ -293,6 +320,9 @@ async function createChatWindow() {
     }
 };
 // 处理流式请求的方法
+//每个流式请求结果最后汇总的时候需要：
+//1.更新页面AI的信息，用户的信息已在发送时更新
+//2.更新数据库
 const requestTestGPTStream = async () => {
     // 在发送请求之前,创建一个新的 AbortController 实例,重置信号
     controller.value = new AbortController();
@@ -380,20 +410,24 @@ const requestTestGPTStream = async () => {
 };
 
 // 发送结果请求的方法，更新数据库中的消息列表
-const sendResultRequest = async (userContent: string, aiContent: String) => {
-    console.log("db started: " + aiContent);
+const sendResultRequest = async (userContent: string, aiContent: string, imageUrl?: string) => {
     try {
         const response = await axios.post('/message/content', {
             userContent: userContent,
             aiContent: aiContent,
             messageBoxId: windowId.value,
+            images: imageUrl
         });
     } catch (error) {
         ElNotification({
-                title: 'Error',
-                message: 'Empty response',
-                type: 'error',
-            })
+            title: 'Error',
+            message: 'Empty response',
+            type: 'error',
+        })
+    } finally {
+        if (saveMsg.value.length < 3) {
+            UserStore.session.isNavToNewWindow = true; //如果是发送的第一个消息 切换到新窗口
+        }
     }
 };
 
@@ -420,7 +454,7 @@ async function getMessageContent(messageBoxId) {
             for (const message of messageData) {
                 processedMessages.push(
                     { text: message.userContent, isUser: true },
-                    { text: message.aiContent, isUser: false }
+                    { text: message.aiContent, isUser: false, url: message.images }
                 );
                 if (saveMsg.value.length >= MAX_LENGTH) {
                     // 移除最早的一项
@@ -457,13 +491,82 @@ async function getMessageContent(messageBoxId) {
         console.error('Error fetching message content:', error);
     } finally {
         setTimeout(() => {
-            scrollToBottom();
-        }, 10)
+            if (isImageGenerated.value) { scrollToBottomWhenInit() }
+            else { scrollToBottom(); }
+        }, 100)
         setTimeout(() => {
             //scrollToBottomWhenInit(); //更新完之后滚到底部
             loading.close()
         }, 300)
         isLoading.value = false;  // 加载结束
+    }
+}
+
+// 发送到图片模型
+const requestImageFormDalle = async (model) => {
+    isLoading.value = true;
+    let responseMsg = '';//回复信息
+    try {
+        const response = await axios.post(`/chat/generate-${model}`, null, {
+            params: {
+                prompt: newMessage.value,
+            },
+        });
+        const imageUrlRes = response.data;
+        if (model == 'sd3') {
+            const base64Image = imageUrlRes.image; // 假设 Base64 编码的图像数据在 data 字段中
+            const binaryString = atob(base64Image); //用atob解析
+
+            //将二进制字符串转换为 Uint8Array
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'image/png' });
+
+            const imageUrl = URL.createObjectURL(blob);
+            responseMsg = '';
+            messages.value.push({ text: responseMsg, isUser: false, url: imageUrl }); //回复显示到屏幕
+            sendResultRequest(newMessage.value, responseMsg, imageUrl);
+        } else {
+            // 处理图片URL，例如显示在页面上
+            // const receivedPromt = imageUrlRes[0].revised_prompt;
+            const imageUrl = imageUrlRes[0].url;
+            responseMsg = imageUrlRes[0].revised_prompt ? imageUrlRes[0].revised_prompt : '';
+            messages.value.push({ text: responseMsg, isUser: false, url: imageUrl }); //回复显示到屏幕
+            isLoading.value = false;
+            sendResultRequest(newMessage.value, responseMsg, imageUrl);
+        }
+        ElNotification({
+                title: '提示',
+                message: '此模型下图片请尽快保存,10分钟后图片将有可能失效',
+                type: 'warning',
+            })
+    } catch (error) {
+        if (model == 'sd3') {
+            ElNotification({
+                title: 'Error',
+                message: '中文请求已被此模型标记,请尝试使用其他词汇,或者使用英文描述以达到更好的效果',
+                type: 'error',
+            });
+            console.error('Error:', error);
+        } else {
+            ElNotification({
+                title: 'Error',
+                message: '网络错误',
+                type: 'error',
+            });
+            console.error('Error:', error);
+        }
+    } finally {
+        isLoading.value = false;
+        let i: number = 1;
+        while (i < 10) {
+            setTimeout(() => {
+                scrollToBottomWhenInit();
+            }, 100);
+            i++;  //用一个很蠢的办法滚到底部。。。因为图片要加载
+        }
     }
 }
 </script>

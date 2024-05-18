@@ -55,18 +55,22 @@ code {
   .server-message,
   .user-message {
       padding: 0;
-      width: 85vw !important;
+      width: 80vw !important;
       margin: 0;
-      font-size: 1.5em !important;
+      font-size: 1.4em !important;
   }
   body {
-    font-size: 1.5em !important;
+    font-size: 1.4em !important;
   }
 
+  .el-sub-menu,
   .el-menu-item{
-    scale: 2;
+    
   }
 
+  .el-menu-vertical-demo:not(.el-menu--collapse) {
+    z-index: 10;
+  }
 }
 // @media (max-width: 1090px) {
 //   .el-menu-vertical-demo:not(.el-menu--collapse),

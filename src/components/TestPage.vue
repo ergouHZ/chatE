@@ -3,7 +3,6 @@ import { useCounterStore } from '@/stores/counter';
 import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
 import { reactive, ref } from 'vue';
-import BlogPost from '../views/BlogPost.vue';
 
 
 const state = reactive({
@@ -15,7 +14,6 @@ const state = reactive({
 })
 
 const squareUrl = 'https://qph.cf2.poecdn.net/main-thumb-pb-1011-200-phggnnskbfadkgntvkacpazkogidumhg.jpeg'
-const deepSeekThumb = '@public/deepseekICON.html'
 
 let result = ref('')//页面上的动态更新内容
 const posts = ref([
@@ -50,9 +48,6 @@ function oukei() {
         
     </div>
     <el-icon><ArrowRight /></el-icon>
-    <div class="block">
-        <el-avatar shape="square" :size="36" :src="deepSeekThumb" />
-    </div>
     <el-icon><Right /></el-icon>
     <div :style="{ fontSize: postFontSize + 'em' }">
         <BlogPost v-for="post in posts" :key="post.id" :title="post.title" :body="post.body"

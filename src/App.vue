@@ -35,7 +35,9 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
-  renewUserSession()
+  if (userSession.session.isLoggedIn) {
+    renewUserSession();
+  }
 });
 
 async function renewUserSession() {

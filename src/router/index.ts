@@ -6,7 +6,8 @@ import RealChatWindow from '@/components/RealChatWindow.vue';
 import CryptoJS from 'crypto-js';
 import { createRouter, createWebHistory } from 'vue-router';
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),  
+  //history: createWebHashHistory(), //部署的时候要设置成这个，不然服务器好像有问题
   routes: [
     {
       path: '/',

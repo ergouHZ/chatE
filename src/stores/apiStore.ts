@@ -2,8 +2,9 @@ import { defineStore } from 'pinia';
 
 export const useApiStore = defineStore('api', {
     state: () => ({
-        baseUrl: 'https://chatserver.eeeegou.com',
-        //baseUrl: 'http://localhost:8080',
+        //baseUrl: 'https://chatserver.eeeegou.com',
+        baseUrl: 'http://localhost:8080',
+        pathCryptKey: 'asdhiu(2398*&*(8213has^72*7^%',
     }),
 })
 

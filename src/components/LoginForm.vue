@@ -27,7 +27,7 @@ const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]{5,19}$/;
 const passwordRegex = /^[\w!@#$%^&*(),.?":{}|<>]{6,20}$/;
 const fits = 'contain'
 const url =
-    '../../public/brand.png'
+    '/brand.png'
 // validate username and password
 function validateUsername(username: string): string | null {
     if (!usernameRegex.test(username)) {

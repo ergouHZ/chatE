@@ -27,7 +27,9 @@
             <el-card @click="handleClick('deepseek-coder')"class="select-card" shadow="hover">Deep seek Coder</el-card>
             <el-card @click="handleClick('gpt-4o-2024-05-13')" class="select-card" shadow="hover">gpt-4o</el-card>
             <el-card @click="handleClick('claude-3-sonnet-20240229')" class="select-card" shadow="hover">claude-3-sonnet</el-card>
-            <el-card class="select-card" shadow="hover">Hover</el-card>
+            <el-card @click="handleClick('dall-e-3')" class="select-card"  shadow="hover">dall-e-3</el-card>
+            <el-card @click="handleClick('dall-e-2')" class="select-card"  shadow="hover">dall-e-2</el-card>
+            <el-card @click="handleClick('sd3')" class="select-card"  shadow="hover">stable-diffusion</el-card>
             <el-card class="select-card" shadow="hover">Hover</el-card>
         </div>
     </div>
@@ -78,10 +80,7 @@ export default {
                     
                 }
             });
-            console.log(model);
-
         }
-
     }
 };
 </script>
