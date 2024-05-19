@@ -113,6 +113,7 @@ Switch
 } from '@element-plus/icons-vue';
 import { useDark, useToggle } from "@vueuse/core";
 import axios from 'axios';
+import { ElLoading } from 'element-plus';
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useUserStore } from '../stores/userStore';
@@ -176,6 +177,11 @@ function getUserWindowsAndUpdate() {
 axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
 axios.defaults.headers.common['Authorization'] = userStore.session.token; //设置头部
 async function getUserWindows() {
+    const loading = ElLoading.service({
+        lock: false,
+        text: '加载..',
+        background: 'rgba(0, 0, 0, 0.5)',
+    })
     try {
         const response = await axios.post(`/message/window/get`, null, {
             params: {
@@ -189,6 +195,9 @@ async function getUserWindows() {
         }
     } catch (error) {
         throw error;
+    }
+    finally {
+        loading.close();
     }
 };
 
