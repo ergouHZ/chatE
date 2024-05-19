@@ -65,7 +65,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
-  base: '', //静态资源环境
+  base: process.env.NODE_ENV === 'production' ? '/app/' : '/', // 设置静态资源的基础路径
+
 })
 
 // vite.config.ts

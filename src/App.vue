@@ -31,23 +31,24 @@ const userSession = useUserStore();
 
 onBeforeMount(() => {
   userSession.initSession();
-  console.log(userSession.session);
 })
 
 onMounted(() => {
   if (userSession.session.isLoggedIn) {
     renewUserSession();
+  }else{
+    router.push('/user');
   }
 });
 
 async function renewUserSession() {
+  if(userSession.session.expiresAt && userSession.session.expiresAt - new Date().getTime() <=21* 24 * 3600 * 1000-20*1000 ){ //令牌过期20秒，减少刷新次数，但是用户的plan需要实时更新
   await axios.post('/user/login', {
     username: userSession.session.username,
     password: userSession.session.password,
   })
     .then((res) => {
       userSession.afterLoginForm(res.data.data, res.data.token);//手动登录或注册后，存入用户信息到session
-      console.log(res.data.message)
     })
     .catch((error) => {
       console.log(error.response.data.error)
@@ -57,13 +58,13 @@ async function renewUserSession() {
 
 
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = userSession.session.isLoggedIn;
-  if (to.matched.some(record => record.meta.requiresAuth) && !isLoggedIn) {
+  if (to.matched.some(record => record.meta.requiresAuth) && !userSession.session.isLoggedIn) {
     next({ path:'/user' });
   } else {
     next();
   }
 });
+}
 </script>
 
 <style scoped>

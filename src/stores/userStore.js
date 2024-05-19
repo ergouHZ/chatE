@@ -8,7 +8,7 @@ export const useUserStore = defineStore("store", {
       username: null,
       password: "",
       isLoggedIn: false,
-      permissions: null,
+      permissions: 0,
       roles: null,
 
       credit: null,
@@ -59,7 +59,7 @@ export const useUserStore = defineStore("store", {
         username: null,
         isLoggedIn: false,
         password: "",
-        permissions: null,
+        permissions: 0,
         roles: null,
         credit: null,
 

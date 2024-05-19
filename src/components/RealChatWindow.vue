@@ -4,10 +4,11 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/atom-one-dark.min.css">
     <!-- 用户的message部分 -->
-
     <div class="chat-container">
         <div ref="containerRef" class="messages-container">
-            <el-card @click="" class="select-card" shadow="hover">gpt-4o</el-card>
+            <div class="head-card-ai">
+                <CardOnChat :model="model"/>
+            </div>
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
                 <span v-if="message.isUser" class="message-content">{{ message.text }}</span>
@@ -21,6 +22,13 @@
                     <div v-if="message.url" class="demo-image">
                         <el-image style="width: 100%; height: 100%" :src="message.url" fit="contain" />
                     </div>
+                    <div v-if="isLoading && index === messages.length - 1">
+                        <!-- 加载区块 -->
+                        <el-card v-loading="true"
+                            style="margin:0;width: 60%;height: 50px;align-self: center;border: none;padding: 0; padding-left: 35%;font-size: medium;box-shadow: none;">
+                            加载中..
+                        </el-card>
+                    </div>
                 </template>
             </div>
         </div>
@@ -32,8 +40,8 @@
         <!--     <div v-if="isLoading" class="loading-indicator">Loading...</div> -->
         <!-- chat input部分 -->
         <div class="chat-input-container">
-            <el-input v-loading="isLoading" v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
-                :autosize="{ minRows: 4, maxRows: 7 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
+            <el-input v-loading="isLoading&&isImageGenerated" v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
+                :autosize="{ minRows: 3, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
                 :disabled="isLoading" @keydown="handleKeyDown">
                 <!-- @keyup.enter="sendMessage" -->
             </el-input>
@@ -60,6 +68,7 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/userStore';
 import { changeToThumb } from '@/utils';
+import CardOnChat from '@/views/cardOnChat.vue';
 import {
 ArrowRight,
 Close
@@ -80,7 +89,7 @@ interface Messages {
     url?: string;
 }
 const messages = ref<Messages[]>([]); //页面上显示的列表
-const MAX_LENGTH = 7; // 设置最大长度为 8，这个是发送的最大的队列数
+const MAX_LENGTH = 5; // 设置最大长度为 8，这个是发送的最大的队列数
 const saveMsg = ref<any>([]); //需要发送的主体
 
 const isLoading = ref(false);
@@ -95,7 +104,7 @@ const route = useRoute();
 //获取传输参数
 const secretKey = 'asdhiu(2398*&*(8213has^72*7^%' //防君子不防小人，真正的信息获取办法在服务器里面，这个只是给路径上遮罩
 const windowId = ref(route.query.windowId);
-const model = ref(route.query.model);
+const model = ref('');
 const isStreaming = ref(false);
 
 const clearData = () => {
@@ -106,7 +115,7 @@ const clearData = () => {
 // 创建一个ref来引用容器元素 ，这是聊天主题的引用
 const containerRef = ref<HTMLElement | null>(null);
 
-// 滚动到容器底部的函数，有点太花了，暂时先不用
+// 滚动到容器底部的函数，有点太花,用在跨度不大的范围
 const scrollToBottomWhenInit = () => {
     if (containerRef.value) {
         const container = containerRef.value;
@@ -131,11 +140,11 @@ const scrollToBottom = () => {
 
 // 创建AbortController
 const controller = ref()
-
+controller.value = new AbortController();
 // 监听 route.query 的变化
 watch(() => route.query, (newQuery) => {
-    controller.value = new AbortController();
     controller.value.abort();
+    controller.value = new AbortController();
     clearData();  //更新所有信息并清空记录
     decryptThePath(route.query.pa);//解析路径
     if (windowId.value) {
@@ -227,8 +236,8 @@ onMounted(() => {
 // 在组件卸载前的方法
 onUnmounted(() => {
     //卸载时取消请求 发送信号
-    controller.value = new AbortController();
     controller.value.abort();
+    controller.value = new AbortController();
     //这个会触发是因为点击一次停止按钮之后,之后的都会带这个信息,要修改一下
 });
 
@@ -237,21 +246,19 @@ const decryptThePath = async (codePath) => {
     const code = bytes.toString(CryptoJS.enc.Utf8)
     var modelRegex = /model=([^&]+)/;
     var modelMatch = code.match(modelRegex);
-    var modelInPath = modelMatch ? modelMatch[1] : null; // 提取 model 参数的值
+    var modelInPath:string  = modelMatch ? modelMatch[1] : null; // 提取 model 参数的值
 
     // 提取 windowId 参数
     var windowIdRegex = /windowId=([^&]+)/;
     var windowIdMatch = code.match(windowIdRegex);
-    var windowInPath = windowIdMatch ? windowIdMatch[1] : null; // 提取 windowId 参数的值
+    var windowInPath= windowIdMatch ? windowIdMatch[1] : null; // 提取 windowId 参数的值
 
     model.value = modelInPath //赋值
     windowId.value = windowInPath
 
     if (model.value == 'dall-e-3' || model.value == 'dall-e-2' || model.value == 'sd3') {
         isImageGenerated.value = true
-
     }
-    console.log("model: " + model.value);
 }
 
 const abortMessage = () => {
@@ -264,12 +271,13 @@ function handleKeyDown(e) {
     }
     if (e.esc) { abortMessage(); }
 }
+
+
 // 发送消息的方法
-// var iconv = require('iconv-lite');
-// var str = "Hello, 世界";
-// var byteCount = iconv.encode(str, 'utf-8').length; // 结果为13  计算字节方法
 const sendMessage = async () => {
-    if (newMessage.value.trim() !== '' && newMessage.value.length <= INPUT_EVENT_MAX_LENGTH.value) {
+    const encoder = new TextEncoder();
+    var byteCount = encoder.encode(newMessage.value).length; //统计输入长度，默认模型不超过5000
+    if (newMessage.value.trim() !== '' && byteCount <= INPUT_EVENT_MAX_LENGTH.value) {
         if (saveMsg.value.length == 0) { //如果是第一条消息
             await createChatWindow()
         }
@@ -281,10 +289,10 @@ const sendMessage = async () => {
             saveMsg.value.shift();
             saveMsg.value.shift();
         }
-        scrollToBottom();
+        setTimeout(() => {
+            scrollToBottomWhenInit();//滚动一下显示用户输入
+        }, 10);
         if (isImageGenerated.value) {
-            console.log("model is: " + isImageGenerated.value);
-            console.log("send", isImageGenerated.value);
             //如果是图片模型
             await requestImageFormDalle(model.value);
         } else {
@@ -295,19 +303,28 @@ const sendMessage = async () => {
         isLoading.value = false;
         newMessage.value = '';
     } else {
+        if(newMessage.value.trim() !== ''){
         ElNotification({
             title: 'Warning',
             message: '请输入文字',
             type: 'error',
-        })
+        })}
+        if(byteCount > INPUT_EVENT_MAX_LENGTH.value){
+            ElNotification({
+                title: 'Warning',
+                message: '输入内容过长',
+                type: 'error',
+            })
+        }
     }
 };
 
 async function createChatWindow() {
+    let truncatedMessage = newMessage.value.substring(0, 40);
     try {
         const response = await axios.post(`/message/window`, {
             userId: UserStore.session.userId,
-            firstMessage: newMessage.value,
+            firstMessage: truncatedMessage,
             aiModel: model.value
         });
 
@@ -341,10 +358,11 @@ const requestTestGPTStream = async () => {
     controller.value = new AbortController();
     const signal = controller.value.signal;
     // 创建一个AbortController实例
+
     const UserStore = useUserStore()//获取用户session,获取token
     const response = await fetch(
-        //'https://chatserver.eeeegou.com/chat/send2openai/stream'
-        'http://localhost:8080/chat/send2openai/stream'
+        'https://www.auraxplorers.com/api/chat/send2openai/stream'
+        //'http://localhost:8080/chat/send2openai/stream'
         , {
             method: 'POST',
             headers: {
@@ -353,7 +371,7 @@ const requestTestGPTStream = async () => {
             },
             body: JSON.stringify({
                 model: model.value,
-                max_tokens: 2800,
+                max_tokens: 2400,
                 //temperature: 0.6,
                 stream: true,
                 messages: saveMsg.value,
@@ -361,6 +379,9 @@ const requestTestGPTStream = async () => {
             }),
         });
 
+    setTimeout(() => {
+        scrollToBottomWhenInit();//滚动一下显示用户输入
+    }, 10);
     messages.value.push({ text: '', isUser: false }); //队列加一条新消息开始传输
     let currentMessageIndex = messages.value.length - 1; // 获取当前消息的索引
     isStreaming.value = true; // 标记为实时更新 流式传输状态
@@ -472,6 +493,7 @@ async function getMessageContent(messageBoxId) {
                 if (saveMsg.value.length >= MAX_LENGTH) {
                     // 移除最早的一项
                     saveMsg.value.shift();
+                    saveMsg.value.shift();
                 }
                 processedSaveMsg.push(
                     { role: 'user', content: message.userContent },
@@ -487,7 +509,6 @@ async function getMessageContent(messageBoxId) {
                 message: 'No message found',
                 type: 'warning',
             })
-            console.log("window success: no message " + response.data.message);
         } else {
             ElNotification({
                 title: 'Error',
@@ -519,6 +540,7 @@ async function getMessageContent(messageBoxId) {
 const requestImageFormDalle = async (model) => {
     isLoading.value = true;
     let responseMsg = '';//回复信息
+    let imageUrl = ''
     try {
         const response = await axios.post(`/chat/generate-${model}`, null, {
             params: {
@@ -562,7 +584,6 @@ const requestImageFormDalle = async (model) => {
                 message: '中文请求已被此模型标记,请尝试使用其他词汇,或者使用英文描述以达到更好的效果',
                 type: 'error',
             });
-            console.error('Error:', error);
         } else {
             ElNotification({
                 title: 'Error',
@@ -621,6 +642,14 @@ const requestImageFormDalle = async (model) => {
     overflow: hidden
 }
 
+.head-card-ai{
+    margin-bottom: 2em;
+    align-self: center;
+    padding: 5px;
+    width: calc(80% + 50px);
+    max-width: 100%;
+}
+
 .messages-container {
     flex: 1;
     padding-left: 16%;
@@ -635,20 +664,23 @@ const requestImageFormDalle = async (model) => {
     /* 用户消息靠右显示 */
 }
 
+
 .user-message,
 .server-message {
     /*  background-color: #badafb31; */
     margin-bottom: 2em;
-    align-self: flex-start;
+    align-self: center;
     padding: 5px;
-    width: 800px;
+    width: calc(80% + 50px);
+    min-width: calc(80% + 50px);
     max-width: 100%;
     font-size: medium;
     /* border: 1.5px solid #71707073; */
 }
 
+
 .user-message {
-    text-align: right;
+    text-align: start;
 }
 
 
@@ -671,12 +703,14 @@ const requestImageFormDalle = async (model) => {
     font-weight: bold;
 }
 
+/* 输入部分 */
 .chat-input-container {
     display: flex;
     align-items: center;
     background-color: transparent;
     position: sticky;
     bottom: 0;
+    margin-bottom: 20px;
     width: 80%;
     max-width: 900px;
 }

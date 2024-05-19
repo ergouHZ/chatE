@@ -51,7 +51,7 @@
                     <template #title>搜索</template>
                 </el-menu-item>
             </RouterLink>
-            <RouterLink to="/user" class="menu-item">
+            <RouterLink to="/subscribe" class="menu-item">
                 <el-menu-item index="3">
                     <el-icon>
                         <Bell />
@@ -119,7 +119,7 @@ import { useUserStore } from '../stores/userStore';
 import historyCard from './historyCard.vue';
 
 const fits = 'contain'
-const url ='/brand.png'
+const url ='https://www.auraxplorers.com/cdn/image/brand.png'
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 const userStore = useUserStore();
@@ -173,7 +173,7 @@ function getUserWindowsAndUpdate() {
         });
 }
 
-axios.defaults.baseURL = 'http://localhost:8080';
+axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
 axios.defaults.headers.common['Authorization'] = userStore.session.token; //设置头部
 async function getUserWindows() {
     try {

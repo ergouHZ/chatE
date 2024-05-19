@@ -11,18 +11,37 @@ export function decodeQueryParams(encodedParams) {
 //图片模型
 export const changeToThumb = (modelName) => {
   if (modelName === 'claude-instant-1.2') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-1011-200-phggnnskbfadkgntvkacpazkogidumhg.jpeg'
-  } else if (modelName === 'gpt-3.5-turbo-0125') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-3004-200-jougqzjtwfqfyqprxbdwofvnwattmtrg.jpeg'
+    return 'https://www.auraxplorers.com/cdn/image/claude1.png'
+  } else if (modelName === 'gpt-3.5-turbo-0125'||modelName === 'gpt-3.5-turbo-instruct') {
+    return 'https://www.auraxplorers.com/cdn/image/gpt3.5.jpeg'
   } else if (modelName === 'deepseek-chat') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-3659661-200-rhbmapadjmovyhaysjskpljibhdqepvj.jpeg'
+    return 'https://www.auraxplorers.com/cdn/image/deepseek-chat.jpeg'
   } else if (modelName === 'deepseek-coder') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-4160236-200-heangijlygymiopfccxqfalgookgdehp.jpeg'
+    return 'https://www.auraxplorers.com/cdn/image/deepseek-coder.jpeg'
   } else if (modelName === 'gpt-4o-2024-05-13') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-3015-200-ivodfqemfvztmvgafhdouijhknthkvmp.jpeg'
+    return 'https://www.auraxplorers.com/cdn/image/main-thumb-gpt4o.jpeg'
   } else if (modelName === 'claude-3-sonnet-20240229') {
-    return 'https://qph.cf2.poecdn.net/main-thumb-pb-1011-200-phggnnskbfadkgntvkacpazkogidumhg.jpeg'
+    return 'https://www.auraxplorers.com/cdn/image/claude3-red.jpeg'
+  }else if (modelName === 'dall-e-3') {
+    return 'https://www.auraxplorers.com/cdn/image/dalle3.jpeg'
+  }else if (modelName === 'dall-e-2') {
+    return 'https://www.auraxplorers.com/cdn/image/dalle2.jpeg'
+  }else if (modelName === 'sd3') {
+    return 'https://www.auraxplorers.com/cdn/image/sd3.jpeg'
+  }else if (modelName === 'claude-3-haiku-20240307') {
+    return 'https://www.auraxplorers.com/cdn/image/claude3-haiku.jpeg'
+  }else if (modelName === 'claude-3-opus-20240229') {
+    return 'https://www.auraxplorers.com/cdn/image/claude3-opus.jpeg'
+  }else if (modelName === 'claude-3-sonnet-20240229') {
+    return 'https://www.auraxplorers.com/cdn/image/claude3-red.jpeg'
+  }else if (modelName === 'gpt-4-turbo-2024-04-09'||modelName === 'gpt-4-turbo') {
+    return 'https://www.auraxplorers.com/cdn/image/gpt4.jpeg'
   }
+  else if (modelName === 'claude-2.0') {
+    return 'https://www.auraxplorers.com/cdn/image/claude2.png'
+  }
+  
+  
   // 如果没有匹配的模型名称，可以返回一个默认图片或者空字符串
   return ''
 
@@ -38,7 +57,11 @@ export const modifyName = (modelName) => {
     return 'gpt-4o'
   } else if (modelName === 'claude-3-sonnet-20240229') {
     return 'claude-3-sonnet'
-  }
+  } else if (modelName === 'sd3') {
+    return 'stable diffusion3'
+  } else if (modelName === 'claude-3-haiku-20240307') {
+    return 'claude-3-haiku'
+  } 
   // 如果没有匹配的模型名称，返回原名
   return modelName
 }

@@ -2,7 +2,7 @@
 import { useApiStore } from '@/stores/apiStore';
 import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
-import { ElLoading } from 'element-plus';
+import { ElLoading, ElNotification } from 'element-plus';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 // 定义响应式数据
@@ -10,6 +10,7 @@ const data = ref<any>(null)
 const error = ref<string | null>(null)
 const loading = ref<boolean>(false)
 const dialogVisible = ref(false)//对话框
+const isNeedPassword = ref(true)//是否需要返回密码进行登录
 const userStore = useUserStore(); // get the user info session
 const apiStore = useApiStore(); // get the api info
 const router = useRouter();
@@ -17,45 +18,25 @@ const baseUrl: string = apiStore.baseUrl;//get global url
 
 const username = ref('')
 const password = ref('')
-
+const passwordConfirm = ref('')
 //responsev error data
 const usernameError = ref<string | null>(null)
 const passwordError = ref<string | null>(null)
 
 //密码账号正则表达式
-const usernameRegex = /^[a-zA-Z][a-zA-Z0-9]{5,19}$/;
+const usernameRegex = /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/; //邮箱的表达格式
 const passwordRegex = /^[\w!@#$%^&*(),.?":{}|<>]{6,20}$/;
 const fits = 'contain'
 const url =
-    '/brand.png'
+    'https://www.auraxplorers.com/cdn/image/brand.png'
 // validate username and password
 function validateUsername(username: string): string | null {
     if (!usernameRegex.test(username)) {
-        if (username.length < 6) {
-            ElMessage({
-                message: '账户名不能少于六位数',
-                type: 'warning'
-            })
-            return 'The account length cannot be less than 6 characters';
-        } else if (username.length > 20) {
-            ElMessage({
-                message: '账户名不能超过20位',
-                type: 'warning'
-            })
-            return 'The account length cannot exceed 20 characters';
-        } else if (!/^[a-zA-Z]/.test(username)) {
-            ElMessage({
-                message: '账户名必须以字母开始',
-                type: 'warning'
-            })
-            return 'Account must start with a letter';
-        } else if (/[^a-zA-Z0-9]/.test(username)) {
-            ElMessage({
-                message: '账户名只能包括字母和数字',
-                type: 'warning'
-            })
-            return 'The account can only contain letters and numbers';
-        }
+        ElMessage({
+            message: '请输入有效的电子邮件地址',
+            type: 'warning'
+        })
+        return '请输入有效的电子邮件地址';
     }
     return null;
 }
@@ -113,8 +94,15 @@ function login() {
 function register() {
     usernameError.value = validateUsername(username.value)
     passwordError.value = validatePassword(password.value)
-    if (!usernameError.value && !passwordError.value) {
-        postUser("register")
+    if (password.value === passwordConfirm.value) {
+        if (!usernameError.value && !passwordError.value) {
+            postUser("register")
+        }
+    } else {
+        ElMessage({
+            message: '两次输入的密码不一致',
+            type: 'warning'
+        })
     }
 }
 
@@ -135,21 +123,31 @@ const postUser = async (postMethod: string) => {
         .then((res) => {
             userStore.afterLoginForm(res.data.data, res.data.token);//手动登录或注册后，存入用户信息到session
             data.value = res.data
-            ElMessage({
-                message: res.data.message,
-                type: 'success'
-            })
-            loading.value = false
-            router.push({
-                path: '/chat'
-            });
+            const status = res.data.status
+            const message = res.data.message
+            if (status == 200) {
+                ElMessage({
+                    message: message,
+                    type: 'success'
+                })
+                loading.value = false
+                router.push({
+                    path: '/chat'
+                });
+            } else {
+                ElNotification({
+                    title: '登录注册' + status.status,
+                    message: message,
+                    type: 'warning'
+                })
+                loading.value = false
+            }
         })
         .catch((error) => {
-            console.log(error.response.data.error)
-            error.value = error.response.data.error
+            console.log("error", error)
             loading.value = false
             ElMessage({
-                message: error.response.data.error,
+                message: "服务器出错,请稍后重试",
                 type: 'error'
             })
         }).finally(() => {
@@ -166,58 +164,110 @@ const postUser = async (postMethod: string) => {
 const isValidated = ref<boolean>(false)
 const isDisable = ref<boolean>(true)
 const isShownCaptcha = ref<boolean>(true)
-const captchaUrl = ref('');
 const captchaInput = ref('');
-const refreshCaptcha = () => {
-    captchaUrl.value = `${baseUrl}/captcha?t=${new Date().getTime()}`;
-    if (captchaUrl.value === null) { console.log("cap"); }
-};
-
-onMounted(() => {
-    refreshCaptcha(); // 初始化时获取验证码
-})
-
-function submitForm() {
-    try {
-        console.log("the cookie code: " + getCookie('captcha'));
-        if (captchaInput.value == getCookie('captcha')) {
-            isDisable.value = false; //解禁
-            isShownCaptcha.value = false; //隐藏验证码块
-            dialogVisible.value = false; //隐藏对话框
-            ElMessage({
-                message: '验证成功!',
-                type: 'success',
-            })
-        }
-    }
-    catch (error) {
-        console.log(error);
-    } finally {
-        refreshCaptcha()//提交之后刷新验证码
-    }
-}
 
 
-function getCookie(name) {
-    if (typeof document === 'undefined' || typeof document.cookie !== 'string') {
-        throw new Error('document.cookie is not available');
-    }
-
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        // Does this cookie string begin with the name we want?
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            const cookieValue = cookie.substring(name.length + 1);
-            if (cookieValue.length > 0) {
-                return decodeURIComponent(cookieValue);
+async function submitForm() {
+    await axios.post('captcha/validate', {
+        username: username.value,
+        captcha: captchaInput.value,
+    })
+        .then((res) => {
+            const status = res.data.status
+            const message = res.data.message
+            if (status == 200) {
+                ElNotification({
+                    title: '验证码' + status,
+                    message: message,
+                    type: 'success'
+                })
+                loading.value = false
+                isDisable.value = false; //解禁
+                isShownCaptcha.value = false; //隐藏验证码块
+                dialogVisible.value = false; //隐藏对话框
+                isValidated.value = true;
+            } else if (status == 201) {
+                ElNotification({
+                    title: '验证码验证' + status,
+                    message: message,
+                    type: 'warning'
+                })
+                loading.value = false
+                isDisable.value = false; //解禁
+                isShownCaptcha.value = false; //隐藏验证码块
+                dialogVisible.value = false; //隐藏对话框
+                isValidated.value = true;
+                isNeedPassword.value = false; //不需要密码，第一次登录
+            } else {
+                ElNotification({
+                    title: '验证码验证' + status,
+                    message: message,
+                    type: 'warning'
+                })
+                loading.value = false
             }
-        }
-    }
-
-    return null; // The cookie was not found
+        })
+        .catch((error) => {
+            console.log(error)
+            loading.value = false
+            ElNotification({
+                title: '验证码',
+                message: "服务器错误;如果第一次登录,请设置密码",
+                type: 'error'
+            })
+            loading.value = false
+            isDisable.value = false; //解禁
+        })
 }
 
+
+
+
+async function sendTheCaptchaEmail() {
+    if (!usernameError.value && username.value.trim() !== '') {
+        dialogVisible.value = true
+        error.value = null
+        await axios.post('captcha', {
+            username: username.value,
+        })
+            .then((res) => {
+                const status = res.data.status
+                const message = res.data.message
+                if (status == 200) {
+                    ElNotification({
+                        title: '验证码',
+                        message: message,
+                        type: 'success'
+                    })
+                    loading.value = false
+
+                } else {
+                    ElNotification({
+                        title: '验证码' + status,
+                        message: message,
+                        type: 'warning'
+                    })
+                    loading.value = false
+                    dialogVisible.value = false; //隐藏对话框
+                }
+            })
+            .catch((error) => {
+                console.log(error)
+                loading.value = false
+                ElNotification({
+                    title: '验证码',
+                    message: "服务器错误",
+                    type: 'error'
+                })
+            })
+    } else {
+        ElNotification({
+            title: '验证码',
+            message: '请输入正确账号',
+            type: 'error'
+        })
+    }
+}
 
 const logout = () => userStore.logout();
 </script>
@@ -228,30 +278,38 @@ const logout = () => userStore.logout();
         <div class="logo-image">
             <el-image style="width: 500px;padding:20px" :src="url" :fit=fits />
         </div>
-        <el-card class="box-card" style="width: 450px;background-color: transparent;border: none;">
+        <el-card class="box-card" style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
             <template #header>
                 <div class="card-header">
-                    <span style="margin: 30px;">账号</span>
+                    <span style="margin: 30px;">邮箱</span>
                     <el-input v-model="username" @blur="validateOnBlur('username')" @click="validateOnClick('username')"
-                        style="width: 240px" placeholder="请输入用户名" />
+                        style="width: 240px;" placeholder="请输入邮箱,用于注册本站账号" />
                     <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
                 </div>
             </template>
             <div class="text item">
-                <div class="card-header">
+                <div v-if="isValidated" class="card-header">
                     <span style="margin: 30px;">密码</span>
                     <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
                         @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
                     <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
-
+                </div>
+            </div>
+            <br>
+            <div class="text item">
+                <div v-if="!isNeedPassword" class="card-header">
+                    <span style="margin: 14px;">确认密码</span>
+                    <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
+                        @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                    <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
                 </div>
             </div>
             <br>
             <el-dialog v-model="dialogVisible" title="验证码" width="400">
                 <span></span>
                 <template #footer>
-                    <img :src="captchaUrl" alt="刷新次数过多,请稍候" @click="refreshCaptcha" />
                     <div class="captcah-input-area">
+                        请输入发送至邮箱的验证码
                         <el-input type="text" v-model="captchaInput" style="width: 240px"
                             placeholder="请输入验证码"></el-input>
                     </div>
@@ -267,11 +325,12 @@ const logout = () => userStore.logout();
             <br>
             <div style="display: flex; align-items: center; justify-content: center;">
                 <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
-                        @click="dialogVisible = true">验证码</el-button></div>
+                        @click="sendTheCaptchaEmail">验证邮箱</el-button></div>
                 <div v-else>
-                    <el-button size="large" type="primary" :disabled="isDisable" round @click="login">登录</el-button>
-                    <el-button size="large" type="primary" :disabled="isDisable" round plain
-                        @click="register">注册</el-button>
+                    <el-button v-if="isNeedPassword" size="large" type="primary" style="margin-right:50px;"
+                        :disabled="isDisable" round @click="login">登录</el-button>
+                    <el-button v-else size="large" type="primary" :disabled="isDisable" round plain
+                        @click="register">设置密码</el-button>
                 </div>
             </div>
         </el-card>
@@ -289,7 +348,73 @@ const logout = () => userStore.logout();
         </ul>
     </body>
 
-    <div v-else class="profile-form"><el-button type="warning" @click="logout">登出测试</el-button></div>
+    <div v-else class="profile-form">
+        <el-card class="box-card" style="width: 450px;background-color: #b6b6b622;border: none;">
+            <template #header>
+                <div class="card-header">
+                    更改密码
+                    <span style="margin: 30px;">邮箱</span>
+                    <el-input v-model="username" @blur="validateOnBlur('username')" @click="validateOnClick('username')"
+                        style="width: 240px;" placeholder="请输入邮箱" />
+                    <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
+                </div>
+            </template>
+            <div class="text item">
+                <div class="text item">
+                    <div v-if="isValidated" class="card-header">
+                        <span style="margin: 30px;">密码</span>
+                        <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
+                            @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                        <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
+                    </div>
+                </div>
+                <br>
+                <div class="text item">
+                    <div v-if="isValidated" class="card-header">
+                        <span style="margin: 14px;">确认密码</span>
+                        <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
+                            @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                        <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
+                    </div>
+                </div>
+            </div>
+            <br>
+            <el-dialog v-model="dialogVisible" title="验证码" width="400">
+                <span></span>
+                <template #footer>
+                    请输入发送至邮箱的验证码
+                    <div class="captcah-input-area">
+                        <el-input type="text" v-model="captchaInput" style="width: 240px"
+                            placeholder="请输入发送至邮箱的验证码"></el-input>
+                    </div>
+                    <div class="dialog-footer">
+                        <br>
+                        <el-button size="large" round @click="dialogVisible = false">取消</el-button>
+                        <el-button size="large" round type="primary" @click="submitForm">
+                            确认
+                        </el-button>
+                    </div>
+                </template>
+            </el-dialog>
+            <br>
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
+                        @click="sendTheCaptchaEmail">验证邮箱</el-button></div>
+                <div v-else>
+                    <el-button size="large" type="primary" :disabled="isDisable" round plain
+                        @click="register">设置密码</el-button>
+                </div>
+            </div>
+
+        </el-card>
+
+        <el-popconfirm title="确定退出么?" @confirm="logout">
+            <template #reference>
+                <el-button type="warning">退出登录</el-button>
+            </template>
+        </el-popconfirm>
+
+    </div>
 </template>
 
 
