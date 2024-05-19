@@ -142,7 +142,7 @@ const onHandleClickTag = () => {
 }
 
 .title-name {
-    font-size: 1.2em;
+    font-size: 1.0em;
     font-weight: bold;
 }
 
@@ -151,7 +151,7 @@ const onHandleClickTag = () => {
 }
 
 .description {
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: #666;
 }
 </style>
