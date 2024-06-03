@@ -620,11 +620,6 @@ const requestImageFormDalle = async (model) => {
     margin: 0;
 }
 
-@media (max-width: 1080px) {}
-
-/* 当视口宽度介于630px和100px之间时应用以下样式 */
-
-
 /* 滚动条 */
 .messages-container::-webkit-scrollbar-track {
     background-color: #f1f1f1;
