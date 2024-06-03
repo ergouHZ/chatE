@@ -4,7 +4,7 @@
             <div class="top-part">
                 <!-- Loading indicator -->
                 <div class="select-holder">
-                    <div class="select-title" style="width: 100%;font-size: larger;font-weight: bold;">
+                    <div class="select-title">
                         Select and Start
                     </div>
                 <!--     <el-radio-group v-model="radio1">
@@ -127,6 +127,7 @@ const sendMessage = async () => {
 .select-title {
     margin-bottom: 20px;
     margin-left: 35%;
+    font-weight: 700;
 }
 
 .select-cards-container {
@@ -134,5 +135,12 @@ const sendMessage = async () => {
     flex-wrap: wrap;
     height: 100%;
     padding-left: 10%;padding-right: 10%;
+}
+
+@media (max-width: 1090px) {
+    .select-title {
+        font-size: 1rem;
+        margin-left: 3rem;
+}
 }
 </style>

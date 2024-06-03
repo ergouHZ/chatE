@@ -7,7 +7,7 @@
     <div class="chat-container">
         <div ref="containerRef" class="messages-container">
             <div class="head-card-ai">
-                <CardOnChat :model="model"/>
+                <CardOnChat :model="model" />
             </div>
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
@@ -40,7 +40,7 @@
         <!--     <div v-if="isLoading" class="loading-indicator">Loading...</div> -->
         <!-- chat input部分 -->
         <div class="chat-input-container">
-            <el-input v-loading="isLoading&&isImageGenerated" v-model="newMessage" style="min-width: 400px;font-weight: bolder ;"
+            <el-input :class="'message-input'" v-loading="isLoading && isImageGenerated" v-model="newMessage"
                 :autosize="{ minRows: 3, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
                 :disabled="isLoading" @keydown="handleKeyDown">
                 <!-- @keyup.enter="sendMessage" -->
@@ -52,7 +52,7 @@
                         <ArrowRight />
                     </el-icon>
                 </el-button>
-                <p style="font-size: smaller;margin: 0;">Ctrl + Enter</p>
+                <p class="enter-to-send">Ctrl + Enter</p>
             </div>
             <el-button v-if="isLoading" :disabled="!isLoading" @click="abortMessage">
                 停止
@@ -70,8 +70,8 @@ import { useUserStore } from '@/stores/userStore';
 import { changeToThumb } from '@/utils';
 import CardOnChat from '@/views/cardOnChat.vue';
 import {
-ArrowRight,
-Close
+    ArrowRight,
+    Close
 } from '@element-plus/icons-vue';
 import axios from 'axios';
 import Clipboard from 'clipboard'; //按键粘贴板
@@ -246,12 +246,12 @@ const decryptThePath = async (codePath) => {
     const code = bytes.toString(CryptoJS.enc.Utf8)
     var modelRegex = /model=([^&]+)/;
     var modelMatch = code.match(modelRegex);
-    var modelInPath:string  = modelMatch ? modelMatch[1] : null; // 提取 model 参数的值
+    var modelInPath: string = modelMatch ? modelMatch[1] : null; // 提取 model 参数的值
 
     // 提取 windowId 参数
     var windowIdRegex = /windowId=([^&]+)/;
     var windowIdMatch = code.match(windowIdRegex);
-    var windowInPath= windowIdMatch ? windowIdMatch[1] : null; // 提取 windowId 参数的值
+    var windowInPath = windowIdMatch ? windowIdMatch[1] : null; // 提取 windowId 参数的值
 
     model.value = modelInPath //赋值
     windowId.value = windowInPath
@@ -303,13 +303,14 @@ const sendMessage = async () => {
         isLoading.value = false;
         newMessage.value = '';
     } else {
-        if(newMessage.value.trim() !== ''){
-        ElNotification({
-            title: 'Warning',
-            message: '请输入文字',
-            type: 'error',
-        })}
-        if(byteCount > INPUT_EVENT_MAX_LENGTH.value){
+        if (newMessage.value.trim() !== '') {
+            ElNotification({
+                title: 'Warning',
+                message: '请输入文字',
+                type: 'error',
+            })
+        }
+        if (byteCount > INPUT_EVENT_MAX_LENGTH.value) {
             ElNotification({
                 title: 'Warning',
                 message: '输入内容过长',
@@ -642,7 +643,7 @@ const requestImageFormDalle = async (model) => {
     overflow: hidden
 }
 
-.head-card-ai{
+.head-card-ai {
     margin-bottom: 2em;
     align-self: center;
     padding: 5px;
@@ -676,6 +677,11 @@ const requestImageFormDalle = async (model) => {
     max-width: 100%;
     font-size: medium;
     /* border: 1.5px solid #71707073; */
+}
+
+.message-input {
+    min-width: 400px;
+    font-weight: bolder;
 }
 
 
@@ -781,5 +787,29 @@ pre {
     overflow-y: hidden;
     margin: 0;
     padding: 0;
+}
+
+.enter-to-send {
+    font-size: smaller;
+    margin: 0;
+}
+
+@media (max-width: 1090px) {
+    .chat-input-container {
+        width: 3rem;
+    }
+
+    .chat-container {
+        align-items: normal;
+    }
+
+    .enter-to-send {
+        font-size: 0.8rem;
+    }
+
+    .message-input {
+        min-width: 14rem;
+        font-weight: bolder;
+    }
 }
 </style>

@@ -115,7 +115,7 @@
                         <p class="message-content">{{ window.content }}</p>
                     </div>
                 </div>
-                <el-dialog v-model="dialogVisible[window.id]" title="Alert" width="500">
+                <el-dialog v-model="dialogVisible[window.id]" title="Alert" width="24rem">
                     <span>确定删除这一条记录吗</span>
                     <template #footer>
                         <div class="dialog-footer">

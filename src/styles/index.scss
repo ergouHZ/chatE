@@ -9,18 +9,20 @@
 body {
   /* font-family: Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", "微软雅黑", Arial, sans-serif; */
-    font-family: 'Roboto', 'Open Sans', sans-serif;
+  font-family: 'Roboto', 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
-  line-height: 1.62; /* 行高为字体大小的1.6倍 */
-  letter-spacing: 0.025em; /* 字符间距为字体大小的0.05em */
+  line-height: 1.62;
+  /* 行高为字体大小的1.6倍 */
+  letter-spacing: 0.025em;
+  /* 字符间距为字体大小的0.05em */
   overflow: hidden;
 
 }
 
 
-.el-main{
+.el-main {
   overflow: hidden;
 }
 
@@ -39,40 +41,40 @@ code {
   width: 260px;
   min-height: 100vh;
   height: 100vh;
-  max-height:max-content;
+  max-height: max-content;
   background-color: var(--ep-color-primary-light-9, #b9b9b924);
 }
 
 @media (max-width: 1090px) {
 
   .messages-container {
-      padding: 10px;
-      padding-left: 8% !important;
-      padding-right: 2% !important;
+    padding: 10px;
+    padding-left: 8% !important;
+    padding-right: 2% !important;
 
   }
 
   .server-message,
   .user-message {
-      padding: 0;
-      width: 80vw !important;
-      margin: 0;
-      font-size: 1.4em !important;
-      min-width: none;
+    padding: 0;
+    width: 80vw !important;
+    margin: 0;
+    font-size: 1.4rem !important;
+    min-width: none;
   }
+
   body {
-    font-size: 1.4em !important;
+    font-size: 1.4rem;
   }
 
   .el-sub-menu,
-  .el-menu-item{
-    
-  }
+  .el-menu-item {}
 
   .el-menu-vertical-demo:not(.el-menu--collapse) {
     z-index: 10;
   }
 }
+
 // @media (max-width: 1090px) {
 //   .el-menu-vertical-demo:not(.el-menu--collapse),
 //   .el-aside{
@@ -85,38 +87,44 @@ code {
 // }
 // }
 //导航栏部分
-.el-menu-vertical-demo{
-  background-color: var(--ep-color-primary-light-9,#b6b6b622);
+.el-menu-vertical-demo {
+  background-color: var(--ep-color-primary-light-9, #b6b6b622);
   letter-spacing: 0.1em;
 }
 
 .el-menu-vertical-demo.is-collapse {
-  width: 15px !important; /* 折叠时的宽度 */
-  border:none !important;
+  width: 15px !important;
+  /* 折叠时的宽度 */
+  border: none !important;
 }
+
 //导航里的选项
-.el-menu-item
-{
+.el-menu-item {
   border-radius: 20px;
   margin-bottom: 10px;
   padding: 0;
   //border: 1.5px solid #71707073;
   align-items: center;
-  text-decoration: none; /* 去除下划线 */
+  text-decoration: none;
+  /* 去除下划线 */
 }
-.el-sub-menu{
+
+.el-sub-menu {
   //border: 1.5px solid #71707073;
   border-radius: 20px;
   margin-bottom: 10px;
   align-items: flex-end;
 }
+
 //聊天框区域，和其他使用布局的部分
 .el-row {
   margin-bottom: 20px;
 }
+
 .el-row:last-child {
   margin-bottom: 0;
 }
+
 .el-col {
   border-radius: 4px;
 }
