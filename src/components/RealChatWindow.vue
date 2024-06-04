@@ -70,8 +70,8 @@ import { useUserStore } from '@/stores/userStore';
 import { changeToThumb } from '@/utils';
 import CardOnChat from '@/views/cardOnChat.vue';
 import {
-    ArrowRight,
-    Close
+ArrowRight,
+Close
 } from '@element-plus/icons-vue';
 import axios from 'axios';
 import Clipboard from 'clipboard'; //按键粘贴板
@@ -431,6 +431,8 @@ const requestTestGPTStream = async () => {
                         message: 'Empty response',
                         type: 'error',
                     })
+                    console.error('Error fetching message content:', error);
+                    console.error('the content',data);
                 }
             }
         }
@@ -516,6 +518,7 @@ async function getMessageContent(messageBoxId) {
                 message: 'Empty response',
                 type: 'error',
             })
+
         }
     } catch (error) {
         ElNotification({

@@ -161,9 +161,9 @@ const postUser = async (postMethod: string) => {
 }
 
 //验证码块
-const isValidated = ref<boolean>(true)
+const isValidated = ref<boolean>(false)
 const isDisable = ref<boolean>(false)
-const isShownCaptcha = ref<boolean>(false)
+const isShownCaptcha = ref<boolean>(true)
 const captchaInput = ref('');
 
 
