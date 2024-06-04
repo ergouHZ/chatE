@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 /* eslint-disable */
 /* prettier-ignore */
 // @ts-nocheck
@@ -40,4 +38,3 @@ declare module 'vue' {
     TestPage: typeof import('./src/components/TestPage.vue')['default']
   }
 }
->>>>>>> Stashed changes

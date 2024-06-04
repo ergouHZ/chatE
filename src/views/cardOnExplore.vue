@@ -10,7 +10,7 @@
                     </div>
                 </div>
                 <div class="title-name">{{ model.titleName }}</div>
-                <div v-if="model.authority>0" @click.stop="onHandleClickTag()">
+                <div v-if="model.authority > 0" @click.stop="onHandleClickTag()">
                     <el-tag type="primary" effect="light" round size="large">
                         PRO
                     </el-tag>
@@ -126,14 +126,14 @@ const onHandleClickTag = () => {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    
+
 }
 
 .select-card {
     flex: 0 0 calc(50% - 10px);
     /* 两列布局，每列宽度为50% */
     margin-bottom: 20px;
-    
+
 }
 
 .card-header {
@@ -153,5 +153,13 @@ const onHandleClickTag = () => {
 .description {
     font-size: 0.8em;
     color: #666;
+}
+
+@media (max-width: 1090px) {
+    .select-card {
+        /* 每个卡片占据一整行（减去间距） */
+        flex: 1 1 calc(100% - 10px);
+        margin-bottom: 20px;
+    }
 }
 </style>
