@@ -23,6 +23,7 @@ import { RouterView, useRouter } from 'vue-router';
 import { useApiStore } from './stores/apiStore';
 import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
+// import from "https://www.google.com/recaptcha/enterprise.js?render=6LeJ4u8pAAAAANhvSVeF4GMVAhPmM2kgwEWkKSZd"
 
 const router = useRouter()
 const apiStore = useApiStore();

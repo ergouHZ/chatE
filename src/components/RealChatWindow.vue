@@ -22,13 +22,13 @@
                     <div v-if="message.url" class="demo-image">
                         <el-image style="width: 100%; height: 100%" :src="message.url" fit="contain" />
                     </div>
-                    <div v-if="isLoading && index === messages.length - 1">
-                        <!-- 加载区块 -->
-                        <el-card v-loading="true"
+                    <!-- <div v-if="isLoading && index === messages.length - 1"> -->
+                    <!-- 加载区块 -->
+                    <!-- <el-card v-loading="true"
                             style="margin:0;width: 60%;height: 50px;align-self: center;border: none;padding: 0; padding-left: 35%;font-size: medium;box-shadow: none;">
                             加载中..
                         </el-card>
-                    </div>
+                    </div> -->
                 </template>
             </div>
         </div>
@@ -94,7 +94,7 @@ const saveMsg = ref<any>([]); //需要发送的主体
 
 const isLoading = ref(false);
 const isUserScrolling = ref(false); //如果用户滚动，则不需要自动滚动
-const INPUT_EVENT_MAX_LENGTH = ref(4000); //限制输入
+const INPUT_EVENT_MAX_LENGTH = ref(5000); //限制输入
 const newMessage = ref(''); //此为用户输入
 
 const isImageGenerated = ref(false); //当前是否图片模型，默认否，当是图片的时候才显示.当进入图片聊天框时，自动为真
@@ -266,10 +266,15 @@ const abortMessage = () => {
 }
 
 function handleKeyDown(e) {
-    if (e.ctrlKey && e.key === 'Enter') {
-        sendMessage();  //发送快捷键 ctrl+enter
+    if (e.key === 'Enter') {
+        e.preventDefault(); // 阻止默认行为，即不插入换行符
+        sendMessage(); // 发送消息
+    } else if (e.shiftKey && e.key === 'Enter') {
+        // 当按下 Shift+Enter 时，允许默认行为执行，即插入换行符
+        // 不需要写代码来处理，因为这是textarea的默认行为
+    } else if (e.key === 'Escape') {
+        abortMessage(); // 如果按下 Esc，调用 abortMessage
     }
-    if (e.esc) { abortMessage(); }
 }
 
 
@@ -313,7 +318,7 @@ const sendMessage = async () => {
         if (byteCount > INPUT_EVENT_MAX_LENGTH.value) {
             ElNotification({
                 title: 'Warning',
-                message: '输入内容过长',
+                message: '输入内容过长,请使用支持长内容模型',
                 type: 'error',
             })
         }
@@ -390,27 +395,30 @@ const requestTestGPTStream = async () => {
     const reader = response.body!!.getReader();
     const decoder = new TextDecoder('utf-8');
     let result = ''; //获取字符串
-
-    //解析并动态解析到返回流
+    const jsonRegex = /\{[^]*\}/; //正则
+    // 全局变量存储缓冲区
+    let incompleteDataBuffer = '';
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const text = decoder.decode(value);
         const lines = text.split('\n');
         for (const line of lines) {
-            if (line.startsWith('data:')) {
-                const data = line.slice(5).trim(); //去除'data:'   ,解析剩下的内容}
-                const trimmedData = data.replace(/\s+/g, ''); // 去除字符串中间的所有空格
-                if (data === '[DONE]' || trimmedData === '{"type":"message_stop"}') { //信息获取完毕
-                    saveMsg.value.push({ role: "assistant", content: result });//最后所有的信息更新进将来要一起发送的队列
-                    isStreaming.value = false;//结束流式
-                    //储存到数据库,这个数组最后一条是刚更新的ai,上一条是用户
-                    sendResultRequest(messages.value[currentMessageIndex - 1].text, messages.value[currentMessageIndex].text);
-                    return;
-                }
-
+            let data = line.startsWith('data:') ? line.slice(5).trim() : line;
+            const trimmedData = data.replace(/\s+/g, ''); // 去除字符串中间的所有空格
+            if (data === '[DONE]' || trimmedData === '{"type":"message_stop"}') { //信息获取完毕
+                saveMsg.value.push({ role: "assistant", content: result });//最后所有的信息更新进将来要一起发送的队列
+                isStreaming.value = false;//结束流式
+                //储存到数据库,这个数组最后一条是刚更新的ai,上一条是用户
+                sendResultRequest(messages.value[currentMessageIndex - 1].text, messages.value[currentMessageIndex].text);
+                return;
+            }
+            //拼接缓冲，数据可能不完全
+            data = incompleteDataBuffer + data;
+            const match = data.match(jsonRegex);
+            if (match) {
                 try {
-                    const parsed = JSON.parse(data);
+                    const parsed = JSON.parse(match[0]);
                     if (parsed.choices) { // 如果是第一种格式,即openai,deeepseek,按下面格式解析.因为两者返还不一样
                         const content = parsed.choices[0].delta?.content;
                         if (content) {
@@ -425,15 +433,27 @@ const requestTestGPTStream = async () => {
                         //滚动的方法
                         scrollToBottom();
                     }
+                    // 清空缓冲区(数据完整)
+                    incompleteDataBuffer = '';
                 } catch (error) {
-                    ElNotification({
-                        title: 'Error',
-                        message: 'Empty response',
-                        type: 'error',
-                    })
-                    console.error('Error fetching message content:', error);
-                    console.error('the content',data);
+                    // 捕获异常，如果是 JSON 解析错误，说明数据不完整，将其累加到缓冲区
+                    if (error instanceof SyntaxError) {
+                        incompleteDataBuffer = data;
+                        // 给出提示信息
+                        console.error('Incomplete JSON data, waiting for more data to complete:', data);
+                    } else {
+                        // 如果不是 JSON 解析错误，可能是其他错误，直接报告
+                        ElNotification({
+                            title: 'Error',
+                            message: 'Error fetching message content',
+                            type: 'error',
+                        });
+                        console.error('Error fetching message content:', error);
+                    }
                 }
+            } else {
+                // 如果没有匹配到完整的 JSON 对象，将数据累加到缓冲区
+                incompleteDataBuffer = data;
             }
         }
         //如果有信号,页面卸载,则执行方法,防止终端的信息未储存
@@ -444,6 +464,7 @@ const requestTestGPTStream = async () => {
             break;
         }
     }
+
 };
 
 // 发送结果请求的方法，更新数据库中的消息列表
@@ -656,7 +677,7 @@ const requestImageFormDalle = async (model) => {
 
 .messages-container {
     flex: 1;
-    padding-left: 16%;
+    padding-left: 10%;
     padding-right: 14%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -677,7 +698,7 @@ const requestImageFormDalle = async (model) => {
     padding: 5px;
     width: calc(80% + 50px);
     min-width: calc(80% + 50px);
-    max-width: 100%;
+    max-width: 100% !important;
     font-size: medium;
     /* border: 1.5px solid #71707073; */
 }
@@ -726,7 +747,7 @@ const requestImageFormDalle = async (model) => {
 
 .chat-input-in-real {
     flex: 1;
-    margin: 16px;
+    margin: 10px;
 
 }
 
@@ -797,15 +818,7 @@ pre {
     margin: 0;
 }
 
-@media (max-width: 1090px) {
-    .chat-input-container {
-        width: 3rem;
-    }
-
-    .chat-container {
-        align-items: normal;
-    }
-
+@media (max-width: 800px) {
     .enter-to-send {
         font-size: 0.8rem;
     }

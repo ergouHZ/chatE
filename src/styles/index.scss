@@ -45,26 +45,46 @@ code {
   background-color: var(--ep-color-primary-light-9, #b9b9b924);
 }
 
-@media (max-width: 1090px) {
+@media (max-width: 800px) {
 
   .messages-container {
-    padding: 10px;
-    padding-left: 8% !important;
-    padding-right: 2% !important;
-
+    padding: 0px;
+    padding-left: 6% !important;
+    padding-right: 4% !important;
   }
+
+  .logo-image{
+    margin-left: 10%;
+    width: 300px !important;
+    justify-content: center !important;
+  }
+
+  .login-form-layout{
+    display: inline !important;
+    z-index: 20 !important;
+    align-items: center;
+}
+.bg-squares {
+
+  z-index: -1 !important;
+}
 
   .server-message,
   .user-message {
     padding: 0;
-    width: 80vw !important;
-    margin: 0;
-    font-size: 1.4rem !important;
+    width: 88vw !important;
+    margin-left: 0 !important;
+    font-size: 1.0rem !important;
     min-width: none;
   }
 
   body {
-    font-size: 1.4rem;
+    font-size: 1.0rem;
+  }
+
+  // 注册卡
+  .box-card{
+    width: 350px !important;
   }
 
   .el-sub-menu,

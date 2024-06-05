@@ -1,8 +1,7 @@
 <template>
-    <el-menu default-active="10" class="el-menu-vertical-demo" :collapse="isCollapse" @open="handleOpen"
+    <el-menu v-if="!isMobileMode" default-active="10" class="el-menu-vertical-demo" :collapse="isCollapse" @open="handleOpen"
         @close="handleClose"
         >
-
         <el-button @click="toggleCollapse" style="margin-bottom: 5px;width: 64px;border: 1.5px solid #71707073 ;height: 40px;">
             <el-icon v-if="isCollapse">
                 <More />
@@ -124,6 +123,7 @@ const url ='https://www.auraxplorers.com/cdn/image/brand.png'
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 const userStore = useUserStore();
+const isMobileMode = ref<boolean>(false);
 
 interface Window {
     id: any;
@@ -220,6 +220,11 @@ const handleResize = () => {
         isCollapse.value = true
     } else {
         isCollapse.value = false
+    }
+    if (windowWidth<800){
+        isMobileMode.value = true
+    }else{
+        isMobileMode.value = false
     }
 }
 </script>
