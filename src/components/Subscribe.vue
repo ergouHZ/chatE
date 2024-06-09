@@ -183,7 +183,7 @@ const colors = [
 ]
 
 const updateUserPermission = () => {
-    if (input.value.length !== 20) {
+    if (input.value.trim().length !== 20) {
         ElMessage({
             message: '验证码长度为20',
             type: 'warning',
@@ -191,7 +191,6 @@ const updateUserPermission = () => {
         return
     }
     postToken()
-    
 }
 
 const reset = () => {
@@ -213,7 +212,7 @@ const handleClose = (done: () => void) => {
 const postToken = async () => {
     try {
         const res = await axios.post('/user/subscribe', {
-            token: input.value
+            token: input.value.trim(),
         })
         if (res.data.status === 200) {
             ElMessage({

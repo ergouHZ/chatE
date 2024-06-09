@@ -75,7 +75,6 @@ const router = useRouter();
 
 // 定义方法
 const fetchAIModels = async (modelName?: string) => {
-    console.log("on card: ", modelName);
     let models: Model[] = [];
     if (localStorage.getItem("aimodels") !== null) {
         try {
@@ -146,7 +145,6 @@ onUnmounted(() => {
 })
 
 const onHandleClickTag = () => {
-    console.log("onHandleClick tag");
     router.push({
         path: 'subscribe',
     });

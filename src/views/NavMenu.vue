@@ -203,8 +203,8 @@ function getUserWindowsAndUpdate() {
         });
 }
 
-//axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
-axios.defaults.baseURL = 'http://localhost:8080/api';
+axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
+//axios.defaults.baseURL = 'http://localhost:8080/api';
 axios.defaults.headers.common['Authorization'] = userStore.session.token; //设置头部
 async function getUserWindows() {
     const loading = ElLoading.service({

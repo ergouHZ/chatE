@@ -303,7 +303,10 @@ function handleKeyDown(e) {
         textarea.value = value.substring(0, start) + '\n' + value.substring(end);
         // 将光标位置移动到新插入的换行符之后
         textarea.selectionStart = textarea.selectionEnd = start + 1;
-        scrollToBottom()
+        // 滚动到最底部
+        nextTick(() => {
+            textarea.scrollTop = textarea.scrollHeight;
+        });
     } else if (e.key === 'Escape') {
         abortMessage(); // 如果按下 Esc，调用 abortMessage
     }
@@ -408,8 +411,8 @@ const requestTestGPTStream = async () => {
 
     const UserStore = useUserStore()//获取用户session,获取token
     const response = await fetch(
-        //'https://www.auraxplorers.com/api/chat/send2openai/stream'
-        'http://localhost:8080/api/chat/send2openai/stream'
+        'https://www.auraxplorers.com/api/chat/send2openai/stream'
+        //'http://localhost:8080/api/chat/send2openai/stream'
         , {
             method: 'POST',
             headers: {
@@ -847,7 +850,7 @@ const assignColor = (module) => {
     display: flex;
     align-items: center;
     background-color: transparent;
-    position: sticky;
+
     bottom: 0;
     margin-bottom: 20px;
     width: 80%;
@@ -939,8 +942,7 @@ pre {
     }
 
     .chat-input-container {
-        margin-bottom: 60px;
-
+        margin-bottom: 11vh;
     }
 }
 </style>

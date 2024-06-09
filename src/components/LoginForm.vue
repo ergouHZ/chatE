@@ -117,9 +117,10 @@ const postUser = async (postMethod: string) => {
         text: 'Loading',
         background: 'rgba(0, 0, 0, 0.2)',
     })
-    if (isValidating.value) { 
-        loadingVue.close(); 
-        return } //还在验证中，无法提交
+    if (isValidating.value) {
+        loadingVue.close();
+        return
+    } //还在验证中，无法提交
     await axios.post(`/user/${postMethod}`, {
         username: username.value,
         password: password.value
@@ -308,30 +309,30 @@ const turnSiteCaptcha = ref('')
 
 
 onBeforeMount(() => {
- 
+
 
 });
 
 onMounted(() => {
+    isValidating.value = true;
     imageAnimation.value = true;
     setTimeout(() => {
         cardAnimation.value = true;
     }, 800);
-    (window as any).onloadTurnstileCallback = () => {
-        console.log("validate")
-        isValidating.value = true; //这个组件能加载再开始验证
-        (window as any).turnstile.render(exampleContainer.value, {
-            //sitekey:'0x4AAAAAAAb6pw3rG5Kf0Y9E',
-            sitekey: '0x4AAAAAAAb6w1pqMDKCnZeY',  //部属用
-            callback: function (token: string) {
-                turnSiteCaptcha.value = token;
-                onSubmit()
-            },
-        });
-    };
 
-
+    setTimeout(() => {
+        isValidating.value = false; //turnslite无法加载，先不用
+    }, 6000);
 })
+
+// const turnSliteKey = '0x4AAAAAAAb6pw3rG5Kf0Y9E' //验证用站钥 //aura
+// //const turnSliteKey = '0x4AAAAAAAb6w1pqMDKCnZeY' //localhost
+// watch(() => turnSiteCaptcha.value, (newCaptcha) => {
+//     if (newCaptcha != '') {
+//         isValidating.value = false; // 这个组件能加载再开始验证
+//         onSubmit();
+//     }
+// });
 
 // onMounted(() => {
 //     imageAnimation.value = true;
@@ -351,7 +352,7 @@ onMounted(() => {
 
 //   loadScript()
 //     .then(() => {
-//       (window as any).onloadTurnstileCallback = () => {
+//       (window as any).onloadTurnstileCallback = function () {
 //         isValidating.value = true; // 这个组件能加载再开始验证
 //         (window as any).turnstile.render('#example-container', {
 //           sitekey: '0x4AAAAAAAb6w1pqMDKCnZeY', // 部属用
@@ -371,62 +372,62 @@ onMounted(() => {
 <template>
 
     <body v-if="!userStore.session.isLoggedIn">
-        <div  ref="exampleContainer"  class="login-form-layout">
+        <div ref="exampleContainer" class="login-form-layout">
             <transition name="el-fade-in">
                 <div v-if="imageAnimation">
                     <el-image class="logo-image" style="width: 500px;padding:20px" :src="url" :fit=fits />
                 </div>
             </transition>
             <transition name="el-zoom-in-center">
-                    <el-card v-if="cardAnimation" class="box-card"
-                        style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
-                        <template #header>
-                            <div class="card-header">
-                                <span style="margin: 30px;">邮箱</span>
-                                <el-input v-model="username" @blur="validateOnBlur('username')"
-                                    @click="validateOnClick('username')" style="width: 240px;"
-                                    placeholder="请输入邮箱,用于注册本站账号" />
-                                <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
-                            </div>
-                        </template>
-                        <div class="text item">
-                            <div class="card-header">
-                                <span style="margin: 30px;">密码</span>
-                                <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
-                                    @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
-                                <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
-                            </div>
+                <el-card v-if="cardAnimation" class="box-card"
+                    style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
+                    <template #header>
+                        <div class="card-header">
+                            <span style="margin: 30px;">邮箱</span>
+                            <el-input v-model="username" @blur="validateOnBlur('username')"
+                                @click="validateOnClick('username')" style="width: 240px;"
+                                placeholder="请输入邮箱,用于注册本站账号" />
+                            <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
                         </div>
-                        <br>
-                        <div class="text item" v-if="isFirstTime">
-                            <div class="card-header">
-                                <span style="margin: 14px;">确认密码</span>
-                                <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
-                                    @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
-                                <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
-                            </div>
+                    </template>
+                    <div class="text item">
+                        <div class="card-header">
+                            <span style="margin: 30px;">密码</span>
+                            <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
+                                @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                            <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
                         </div>
+                    </div>
+                    <br>
+                    <div class="text item" v-if="isFirstTime">
+                        <div class="card-header">
+                            <span style="margin: 14px;">确认密码</span>
+                            <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
+                                @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                            <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
+                        </div>
+                    </div>
 
-                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAb6w1pqMDKCnZeY"
-                            data-callback="javascriptCallback" style="display: none;"></div>
-                        <!-- TODO 部署的时候需要更换sitekey -->
-                        <div style="display: flex; align-items: center; justify-content: center;">
-                            <!-- <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
+                    <!-- <vue-turnstile :site-key="turnSliteKey" v-model="turnSiteCaptcha" /> -->
+                    <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAb6pw3rG5Kf0Y9E" style="display: none;"></div> -->
+                    <!-- TODO 部署的时候需要更换sitekey -->
+                    <div style="display: flex; align-items: center; justify-content: center;">
+                        <!-- <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
                         @click="sendTheCaptchaEmail">验证邮箱</el-button></div>
                 <div v-else> -->
-                            <!-- <div v-if="isValidating" style="justify-content: center;align-items: center;">
+                        <!-- <div v-if="isValidating" style="justify-content: center;align-items: center;">
                     验证中
                     </div> -->
-                            <el-button v-if="!isFirstTime" v-loading="isValidating" size="large" type="primary" style=""
-                                :disabled="isDisable" round @click="login">登录</el-button>
-                            <el-button v-else size="large" v-loading="isValidating" type="primary" :disabled="isDisable"
-                                round plain @click="register">注册</el-button>
-                            <el-switch v-model="isFirstTime" class="mb-2" active-text="注册账号" inactive-text=""
-                                style="margin-left: 50px;" />
+                        <el-button v-if="!isFirstTime" v-loading="isValidating" size="large" type="primary" style=""
+                            :disabled="isDisable" round @click="login">登录</el-button>
+                        <el-button v-else size="large" v-loading="isValidating" type="primary" :disabled="isDisable"
+                            round plain @click="register">注册</el-button>
+                        <el-switch v-model="isFirstTime" class="mb-2" active-text="注册账号" inactive-text=""
+                            style="margin-left: 50px;" />
 
-                        </div>
-                    </el-card>
- 
+                    </div>
+                </el-card>
+
             </transition>
             <ul class="bg-squares">
                 <li></li>
