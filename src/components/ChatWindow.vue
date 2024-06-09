@@ -39,7 +39,6 @@ import { useHeaderStore } from "@/stores/header";
 import { useUserStore } from '@/stores/userStore';
 import cardOnExplore from '@/views/cardOnExplore.vue';
 import axios from 'axios';
-import { useRouter } from 'vue-router';
 
 const HeaderStore = useHeaderStore();
 // 获取用户存储
@@ -52,16 +51,6 @@ onMounted(()=>{
   }
     HeaderStore.clear(); //选择栏清空
 })
-
-// 获取路由实例
-const router = useRouter();
-router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth) && !UserStore.session.isLoggedIn) {
-    next({ path:'/user' });
-  } else {
-    next();
-  }
-});
 
 async function renewUserSession() {
   if(UserStore.session.expiresAt && UserStore.session.expiresAt - new Date().getTime() <=21* 24 * 3600 * 1000-20*1000 ){ //令牌过期20秒，减少刷新次数，但是用户的plan需要实时更新

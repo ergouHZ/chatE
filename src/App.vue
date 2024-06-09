@@ -79,7 +79,7 @@ router.beforeEach((to, from, next) => {
   } else {
     next();
   }
-});
+}); //不整合在router.index里是因为在那里无法初始化usersession，检验登录的守卫只能在根节点加
 </script>
 
 <style scoped>
