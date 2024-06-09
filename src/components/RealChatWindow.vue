@@ -11,7 +11,13 @@
             </div>
             <div v-for="(message, index) in messages" :key="index"
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
-                <span v-if="message.isUser" class="message-content">{{ message.text }}</span>
+                <span v-if="message.isUser" class="message-content">
+                    <div class="model-info">
+                        <el-avatar class="user-avatar" shape="circle" :size="36" :style="{ backgroundColor: avatarColor }">{{ userAvatarName }} </el-avatar>
+                    </div>
+                    <br>
+                    {{ message.text }}
+                </span>
                 <!-- 对于非用户消息 -->
                 <template v-else>
                     <div class="model-info">
@@ -41,7 +47,7 @@
         <!-- chat input部分 -->
         <div class="chat-input-container">
             <el-input :class="'message-input'" v-loading="isLoading && isImageGenerated" v-model="newMessage"
-                :autosize="{ minRows: 3, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
+                :autosize="{ minRows: 2, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
                 :disabled="isLoading" @keydown="handleKeyDown">
                 <!-- @keyup.enter="sendMessage" -->
             </el-input>
@@ -52,7 +58,6 @@
                         <ArrowRight />
                     </el-icon>
                 </el-button>
-                <p class="enter-to-send">Ctrl + Enter</p>
             </div>
             <el-button v-if="isLoading" :disabled="!isLoading" @click="abortMessage">
                 停止
@@ -66,6 +71,7 @@
 </template>
 
 <script setup lang="ts">
+import { useHeaderStore } from "@/stores/header";
 import { useUserStore } from '@/stores/userStore';
 import { changeToThumb } from '@/utils';
 import CardOnChat from '@/views/cardOnChat.vue';
@@ -98,14 +104,16 @@ const INPUT_EVENT_MAX_LENGTH = ref(5000); //限制输入
 const newMessage = ref(''); //此为用户输入
 
 const isImageGenerated = ref(false); //当前是否图片模型，默认否，当是图片的时候才显示.当进入图片聊天框时，自动为真
-
+const UserStore = useUserStore();
 const route = useRoute();
-
+const headerStore = useHeaderStore();
 //获取传输参数
 const secretKey = 'asdhiu(2398*&*(8213has^72*7^%' //防君子不防小人，真正的信息获取办法在服务器里面，这个只是给路径上遮罩
 const windowId = ref(route.query.windowId);
 const model = ref('');
 const isStreaming = ref(false);
+const charge = ref(0)
+const userAvatarName = ref(UserStore.session.username!!.substring(0, 2).toUpperCase());
 
 const clearData = () => {
     messages.value = [];
@@ -147,6 +155,7 @@ watch(() => route.query, (newQuery) => {
     controller.value = new AbortController();
     clearData();  //更新所有信息并清空记录
     decryptThePath(route.query.pa);//解析路径
+    headerStore.setModel(model.value);
     if (windowId.value) {
         getMessageContent(windowId.value);
     }
@@ -214,7 +223,6 @@ const renderMarkdown = (text: string) => {
 };
 
 // 设置Axios的默认头部
-const UserStore = useUserStore();
 axios.defaults.headers.common['Authorization'] = UserStore.session.token;
 
 //载入的时候清空
@@ -224,6 +232,11 @@ onBeforeMount(() => {
 });
 
 onMounted(() => {
+    const module = UserStore.session.userId!! % 10; //对user id取模
+
+// 根据模块数据分配颜色
+avatarColor.value = assignColor(module);
+    headerStore.setModel(model.value)
     //这里不加在新内容，由watch负责，不然会重复
     if (windowId.value) {
         getMessageContent(windowId.value);
@@ -231,7 +244,16 @@ onMounted(() => {
     if (model.value == 'dall-e-3' || model.value == 'dall-e-2' || model.value == 'sd3') {
         isImageGenerated.value = true
     } //挂载时也要设置，在路由里设置第一次点进来没用
+
+    //获取对应用量，这是前端的更新，后端更新在服务器中
+    fetchAIModels().then(() => {
+        charge.value = getChargeByModelName(model.value);
+    });
 });
+
+onBeforeUnmount(() => {
+    headerStore.clear()
+})
 
 // 在组件卸载前的方法
 onUnmounted(() => {
@@ -266,12 +288,22 @@ const abortMessage = () => {
 }
 
 function handleKeyDown(e) {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault(); // 阻止默认行为，即不插入换行符
         sendMessage(); // 发送消息
     } else if (e.shiftKey && e.key === 'Enter') {
-        // 当按下 Shift+Enter 时，允许默认行为执行，即插入换行符
-        // 不需要写代码来处理，因为这是textarea的默认行为
+        e.preventDefault(); // 阻止默认行为，即不插入换行符
+        // 手动插入换行符
+        const textarea = e.target;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const value = textarea.value;
+
+        // 插入换行符
+        textarea.value = value.substring(0, start) + '\n' + value.substring(end);
+        // 将光标位置移动到新插入的换行符之后
+        textarea.selectionStart = textarea.selectionEnd = start + 1;
+        scrollToBottom()
     } else if (e.key === 'Escape') {
         abortMessage(); // 如果按下 Esc，调用 abortMessage
     }
@@ -282,6 +314,14 @@ function handleKeyDown(e) {
 const sendMessage = async () => {
     const encoder = new TextEncoder();
     var byteCount = encoder.encode(newMessage.value).length; //统计输入长度，默认模型不超过5000
+    if (UserStore.session.credit <= 0) {
+        ElNotification({
+            title: 'Warning',
+            message: '目前服务器额度已用尽,用户无法使用',
+            type: 'error',
+        })
+        return
+    }
     if (newMessage.value.trim() !== '' && byteCount <= INPUT_EVENT_MAX_LENGTH.value) {
         if (saveMsg.value.length == 0) { //如果是第一条消息
             await createChatWindow()
@@ -305,6 +345,7 @@ const sendMessage = async () => {
             //发送流式到客户端，非图片模型的方法
             await requestTestGPTStream();
         }
+        UserStore.session.credit -= charge.value; //更新目前费用
         isLoading.value = false;
         newMessage.value = '';
     } else {
@@ -367,8 +408,8 @@ const requestTestGPTStream = async () => {
 
     const UserStore = useUserStore()//获取用户session,获取token
     const response = await fetch(
-        'https://www.auraxplorers.com/api/chat/send2openai/stream'
-        //'http://localhost:8080/chat/send2openai/stream'
+        //'https://www.auraxplorers.com/api/chat/send2openai/stream'
+        'http://localhost:8080/api/chat/send2openai/stream'
         , {
             method: 'POST',
             headers: {
@@ -529,14 +570,14 @@ async function getMessageContent(messageBoxId) {
             saveMsg.value = processedSaveMsg;
         } else if (response.data.status === 201) {
             ElNotification({
-                title: 'warning',
-                message: 'No message found',
+                title: 'warning' + response.data.status,
+                message: 'No message found: ' + response.data.message,
                 type: 'warning',
             })
         } else {
             ElNotification({
-                title: 'Error',
-                message: 'Empty response',
+                title: 'Error' + response.data.status,
+                message: response.data.message,
                 type: 'error',
             })
 
@@ -544,7 +585,7 @@ async function getMessageContent(messageBoxId) {
     } catch (error) {
         ElNotification({
             title: 'Error',
-            message: 'Empty response',
+            message: 'Empty response 网络错误',
             type: 'error',
         })
         console.error('Error fetching message content:', error);
@@ -628,6 +669,74 @@ const requestImageFormDalle = async (model) => {
         }
     }
 }
+
+
+//获取对应用量，更新前端
+const aiModels = ref([]);
+const modelChargeMap = ref({});
+
+const fetchAIModels = async () => {
+    if (localStorage.getItem("aimodels") !== null) {
+        try {
+            const items = JSON.parse(localStorage.getItem("aimodels")!);
+            if (items.expiry > new Date().getTime()) {
+                aiModels.value = items.value;
+                createModelChargeMap(items.value);
+                return;
+            } else {
+                localStorage.removeItem("aimodels");
+                return fetchAIModels();
+            }
+        } catch (error) {
+            console.error("Failed to parse JSON from localStorage:", error);
+            localStorage.removeItem("aimodels");
+            return fetchAIModels();
+        }
+    } else {
+        try {
+            const response = await axios.get('/chat/models');
+            aiModels.value = response.data;
+            createModelChargeMap(response.data);
+            const now = new Date();
+            const item = {
+                value: response.data,
+                expiry: now.getTime() + 1 * 12 * 3600 * 1000,
+            };
+            localStorage.setItem("aimodels", JSON.stringify(item));
+        } catch (error) {
+            ElNotification({
+                title: 'Error',
+                message: "获取数据错误,请稍后再试",
+                type: 'error',
+                duration: 5000
+            });
+        }
+    }
+};
+
+const createModelChargeMap = (models) => {
+    const map = {};
+    models.forEach(model => {
+        map[model.modelName] = model.charge;
+    });
+    modelChargeMap.value = map;
+};
+
+const getChargeByModelName = (modelName) => {
+    return modelChargeMap.value[modelName];
+};
+
+const avatarColor =ref('#FF5733')
+const assignColor = (module) => {
+    // 定义10种不同的颜色
+    const colors = [
+  '#2E2E2E', '#3B3B3B', '#4A4A4A', '#5B5B5B', '#6C6C6C',
+  '#7D7D7D', '#8E8E8E', '#9F9F9F', '#B0B0B0', '#C1C1C1'
+];
+
+    // 根据模块ID返回对应的颜色
+    return colors[module];
+}
 </script>
 <style scope>
 .chat-info {}
@@ -677,7 +786,7 @@ const requestImageFormDalle = async (model) => {
 
 .messages-container {
     flex: 1;
-    padding-left: 10%;
+    padding-left: 13%;
     padding-right: 14%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -798,6 +907,7 @@ code {
     line-height: 1.2;
     width: inherit !important;
     font-size: 1em;
+    max-width: 860px !important;
     /* Optional, only if needed */
 }
 
@@ -826,6 +936,11 @@ pre {
     .message-input {
         min-width: 14rem;
         font-weight: bolder;
+    }
+
+    .chat-input-container {
+        margin-bottom: 60px;
+
     }
 }
 </style>

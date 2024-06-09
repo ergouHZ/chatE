@@ -5,14 +5,15 @@ export const useUserStore = defineStore("store", {
   state: () => ({
     session: {
       userId: null,
-      username: null,
+      username: "",
       password: "",
       isLoggedIn: false,
       permissions: 0,
       roles: null,
+      subscribeExpired: null,//会员过期时间
 
-      credit: null,
-      expiresAt: null,
+      credit: 0,
+      expiresAt: null,//session过期时间
 
       token:"", //服务器令牌
 
@@ -37,7 +38,7 @@ export const useUserStore = defineStore("store", {
 
     //在用户登录之后创建session,并通过服务器获得令牌，令牌存储到了http中
     //用户session存储在本地cookie
-    afterLoginForm(user,token) {
+    afterLoginSetSession(user) {
       const session = {
         userId: user.userId,
         username: user.username,
@@ -46,23 +47,27 @@ export const useUserStore = defineStore("store", {
         permissions: user.authority, //是否有权限
         credit: user.credit,
         roles: user.roles,
+        subscribeExpired:user.endTime,
         expiresAt: new Date().getTime() + 21 * 24 * 3600 * 1000, // 令牌过期时间为3周
-        
-        token:token
       };
       this.setSession(session); // 将生成的所有的信息，保存到新的本地用户会话
+    },
+
+    updateToken(token){
+      this.session.token = token;
+      localStorage.setItem("session", JSON.stringify(this.session)); // 存储到本地存储
     },
 
     logout() {
       this.setSession({
         userId: null,
-        username: null,
+        username: "",
         isLoggedIn: false,
         password: "",
         permissions: 0,
         roles: null,
-        credit: null,
-
+        credit: 0,
+        subscribeExpired: null,//会员过期时间
         expiresAt: null,
         token:"",
 
@@ -70,7 +75,7 @@ export const useUserStore = defineStore("store", {
       });
       this.session.isUpdating = true
       localStorage.removeItem("session"); // 清除本地存储
-      const session = JSON.parse(localStorage.getItem("session"));
+      localStorage.removeItem("windows");
     },
 
     setSession(session) {

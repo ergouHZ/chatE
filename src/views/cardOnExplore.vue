@@ -1,27 +1,29 @@
 <template>
-    <div class="ai-card">
-        <el-card :disabled="false" v-for="model in aiModels" :key="model.ai_id"
-            @click="handleClick(model.modelName, model.authority)" class="select-card" shadow="hover">
-            <div class="card-header">
-                <!-- 这里是模型图标的位置 -->
-                <div class="model-icon">
-                    <div class="model-avatar">
-                        <el-avatar shape="square" :size="36" :src="changeToThumb(model.modelName)" />
+    <transition name="el-zoom-in-top">
+        <div class="ai-card" v-if="showAnimation">
+            <el-card :disabled="false" v-for="model in aiModels" :key="model.ai_id"
+                @click="handleClick(model.modelName, model.authority)" class="select-card" shadow="hover">
+                <div class="card-header">
+                    <!-- 这里是模型图标的位置 -->
+                    <div class="model-icon">
+                        <div class="model-avatar">
+                            <el-avatar shape="square" :size="36" :src="changeToThumb(model.modelName)" />
+                        </div>
+                    </div>
+                    <div class="title-name">{{ model.titleName }}</div>
+                    <div v-if="model.authority > 0" @click.stop="onHandleClickTag()">
+                        <el-tag type="primary" effect="light" round size="large">
+                            PRO
+                        </el-tag>
                     </div>
                 </div>
-                <div class="title-name">{{ model.titleName }}</div>
-                <div v-if="model.authority > 0" @click.stop="onHandleClickTag()">
-                    <el-tag type="primary" effect="light" round size="large">
-                        PRO
-                    </el-tag>
+                <div class="card-body">
+                    <!-- 卡片主体部分，可以根据需要调整样式 -->
+                    <div class="description">{{ model.description }}</div>
                 </div>
-            </div>
-            <div class="card-body">
-                <!-- 卡片主体部分，可以根据需要调整样式 -->
-                <div class="description">{{ model.description }}</div>
-            </div>
-        </el-card>
-    </div>
+            </el-card>
+        </div>
+    </transition>
 </template>
 
 <script setup lang="ts">
@@ -45,7 +47,7 @@ const UserStore = useUserStore();
 axios.defaults.headers.common['Authorization'] = UserStore.session.token;
 const auth: number = UserStore.session.permissions;
 const aiModels = ref<Model[]>([]);
-
+const showAnimation = ref(false);
 // 获取路由实例
 const router = useRouter();
 
@@ -72,10 +74,10 @@ const fetchAIModels = async () => {
             const response = await axios.get('/chat/models');
             aiModels.value = response.data;
             const now = new Date();
-            // `item` 是一个对象，包含实际的值和过期时间，设置每过12小时要强制更新，但是减少请求
+            // `item` 是一个对象，包含实际的值和过期时间，设置每过1小时要强制更新，但是减少请求
             const item = {
                 value: response.data,
-                expiry: now.getTime() + 1 * 12 * 3600 * 1000,
+                expiry: now.getTime() + 1 * 3600 * 1000,
             };
             localStorage.setItem("aimodels", JSON.stringify(item));
         } catch (error) {
@@ -90,6 +92,15 @@ const fetchAIModels = async () => {
 };
 
 const handleClick = (model: string, authModel) => {
+    if (!UserStore.session.isLoggedIn) {
+        showAnimation.value = false; //结束动画
+        setTimeout(() => {
+            router.push({
+                path: '/subscribe',
+            });
+        }, 300);
+        return;
+    }
     if (auth < authModel) {
         ElNotification({
             title: 'Plan',
@@ -99,18 +110,28 @@ const handleClick = (model: string, authModel) => {
         });
         return;
     } else {
-        router.push({
-            path: '/chat-ai', query: {
-                model: model,
-                message: '',
-            }
-        });
+        showAnimation.value = false; //结束动画
+        setTimeout(() => {
+            router.push({
+                path: '/chat-ai', query: {
+                    model: model,
+                    message: '',
+                }
+            });
+        }, 300);
+
     }
 };
 
 // 在组件挂载时调用 fetchAIModels
 onMounted(() => {
     fetchAIModels();
+    showAnimation.value = true;
+});
+
+onBeforeUnmount(() => {
+    console.log("onBeforeUnmount")
+
 });
 
 const onHandleClickTag = () => {
@@ -161,5 +182,11 @@ const onHandleClickTag = () => {
         flex: 1 1 calc(100% - 10px);
         margin-bottom: 20px;
     }
+}
+
+.el-zoom-in-top-enter-active,
+.el-zoom-in-top-leave-active {
+    transition: all 0.6s ease;
+    /* 你可以根据需求调整时间和缓动函数 */
 }
 </style>

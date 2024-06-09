@@ -42,7 +42,7 @@
 
 .model-name-in-card {
     margin: 0;
-    font-size: 10px;
+    font-size: 0.8rem;
     flex: 1 0.4 auto;
     /* 确保占据剩余空间 */
     overflow: hidden;
@@ -65,10 +65,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    margin: 3px;
+    margin: 2px;
     margin-left: 0;
-    font-size: small;
+    font-size: 0.8rem;
     width: 250px;
+    padding-bottom: 3px;
 }
 
 .right-icon {
@@ -96,7 +97,7 @@
 <template>
     <div>
         <div v-for="(window, index) in props.windows" :key="`${window.id}-${index}`" class="message-card"
-            :body-style="{ padding: '0' }">
+            :body-style="{ padding: '0' }" style="font-family:Arial, Helvetica, sans-serif">
             <div class="window-card" :class="{ 'window-card-active': activeWindowId === window.id }"
                 @click="handleClick(window.id, window.name)">
                 <div class="message-container" @click="handleClick(window.id, window.name)">

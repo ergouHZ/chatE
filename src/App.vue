@@ -2,6 +2,7 @@
 
   <html v-if="userSession.session.isLoggedIn">
   <body>
+    <el-header v-if="isShowHeader" style="padding: 0;height: 51px;"><headerCus /></el-header>
       <el-container class="layout-container-demo" style="height: 100vh">
         <NavMenu />
         <el-container>
@@ -21,14 +22,23 @@
 import axios from 'axios';
 import { RouterView, useRouter } from 'vue-router';
 import { useApiStore } from './stores/apiStore';
+import { useHeaderStore } from './stores/header';
 import { useUserStore } from './stores/userStore';
 import NavMenu from './views/NavMenu.vue';
+import headerCus from './views/header.vue';
 // import from "https://www.google.com/recaptcha/enterprise.js?render=6LeJ4u8pAAAAANhvSVeF4GMVAhPmM2kgwEWkKSZd"
 
 const router = useRouter()
 const apiStore = useApiStore();
+const headerStore = useHeaderStore();
 const baseUrl = apiStore.baseUrl;//get global url
 const userSession = useUserStore();
+const isMobileMode = ref<boolean>(false);
+const isShowHeader = ref<boolean>(false);
+
+watch(() => headerStore.isShow, (newState) => {
+    isShowHeader.value=newState
+,{immediate: true}})
 
 onBeforeMount(() => {
   userSession.initSession();
@@ -37,8 +47,6 @@ onBeforeMount(() => {
 onMounted(() => {
   if (userSession.session.isLoggedIn) {
     renewUserSession();
-  }else{
-    router.push('/user');
   }
 });
 
@@ -49,23 +57,16 @@ async function renewUserSession() {
     password: userSession.session.password,
   })
     .then((res) => {
-      userSession.afterLoginForm(res.data.data, res.data.token);//手动登录或注册后，存入用户信息到session
+      userSession.afterLoginSetSession(res.data.data);//手动登录或注册后，存入用户信息到session
+      userSession.updateToken(res.data.token)
     })
     .catch((error) => {
       console.log(error.response.data.error)
       error.value = error.response.data.error
     })
 }
-
-
-router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth) && !userSession.session.isLoggedIn) {
-    next({ path:'/user' });
-  } else {
-    next();
-  }
-});
 }
+
 </script>
 
 <style scoped>
@@ -93,4 +94,9 @@ router.beforeEach((to, from, next) => {
   height: 100%;
   right: 20px;
 }
+
+.el-header{
+  padding-left: 0;
+}
+
 </style>

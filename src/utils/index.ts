@@ -43,7 +43,7 @@ export const changeToThumb = (modelName) => {
   
   
   // 如果没有匹配的模型名称，可以返回一个默认图片或者空字符串
-  return ''
+  return 'https://www.auraxplorers.com/cdn/image/logo.png'
 
 
 }
@@ -61,6 +61,8 @@ export const modifyName = (modelName) => {
     return 'stable diffusion3'
   } else if (modelName === 'claude-3-haiku-20240307') {
     return 'claude-3-haiku'
+  } else if (modelName ==='gpt-4-turbo-2024-04-09'){
+    return 'gpt-4-turbo'
   } 
   // 如果没有匹配的模型名称，返回原名
   return modelName

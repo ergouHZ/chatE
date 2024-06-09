@@ -7,15 +7,15 @@
 // }
 
 body {
-  /* font-family: Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", "微软雅黑", Arial, sans-serif; */
-  font-family: 'Roboto', 'Open Sans', sans-serif;
+  font-family: Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "微软雅黑", Arial, sans-serif; 
+  // font-family: 'Roboto', 'Open Sans', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
   line-height: 1.62;
   /* 行高为字体大小的1.6倍 */
-  letter-spacing: 0.025em;
+  letter-spacing: 0.02em;
   /* 字符间距为字体大小的0.05em */
   overflow: hidden;
 
@@ -49,13 +49,13 @@ code {
 
   .messages-container {
     padding: 0px;
-    padding-left: 6% !important;
+    padding-left: 4% !important;
     padding-right: 4% !important;
   }
 
   .logo-image{
     margin-left: 10%;
-    width: 300px !important;
+    width: 220px !important;
     justify-content: center !important;
   }
 

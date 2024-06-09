@@ -1,15 +1,17 @@
 <template>
-    <el-menu v-if="!isMobileMode" default-active="10" class="el-menu-vertical-demo" :collapse="isCollapse" @open="handleOpen"
-        @close="handleClose"
-        >
-        <el-button @click="toggleCollapse" style="margin-bottom: 5px;width: 64px;border: 1.5px solid #71707073 ;height: 40px;">
-            <el-icon v-if="isCollapse">
-                <More />
-            </el-icon>
-            <el-icon v-else>
-                <Switch />
-            </el-icon>
-        </el-button>
+    <el-menu v-if="!isMobileMode || headerStore.isShowNav" default-active="10" class="el-menu-vertical-demo"
+        :collapse="isCollapse" @open="handleOpen" @close="handleClose">
+        <div v-if="!isMobileMode">
+            <el-button @click="toggleCollapse"
+                style="margin-bottom: 5px;width: 64px;border: 1.5px solid #71707073 ;height: 40px;">
+                <el-icon v-if="isCollapse">
+                    <More />
+                </el-icon>
+                <el-icon v-else>
+                    <Switch />
+                </el-icon>
+            </el-button>
+        </div>
         <RouterLink to="/chat">
             <div v-if="isCollapse">
                 <el-menu-item index="10">
@@ -35,7 +37,7 @@
             <!-- <div class="histories-window">
                 <historyCard :windows="windows" />
             </div> -->
-            <el-scrollbar class="messages-history-window" height="45vh">
+            <el-scrollbar class="messages-history-window" height="50vh">
                 <div class="card-scroll-bar">
                     <historyCard :windows="windows" />
                 </div>
@@ -88,16 +90,30 @@
                 </el-icon>
                 <template #title>用户</template>
             </el-menu-item>
-        </RouterLink>
+        </RouterLink>  
         <div class="menu-footer">
-            <el-button @click="toggleDark()" size="large" round style="letter-spacing: 0.1em;"><el-icon>
-                    <setting />
-                </el-icon>
-                <div v-if="!isCollapse">主题</div>
-            </el-button>
+            <el-switch v-model="isDark" size="large" style="--el-switch-on-color:#2e55d497">
+                <template #inactive-action>
+                    <span class="custom-active-action"><el-icon>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                                <path fill="currentColor"
+                                    d="M512 704a192 192 0 1 0 0-384 192 192 0 0 0 0 384m0 64a256 256 0 1 1 0-512 256 256 0 0 1 0 512m0-704a32 32 0 0 1 32 32v64a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32m0 768a32 32 0 0 1 32 32v64a32 32 0 1 1-64 0v-64a32 32 0 0 1 32-32M195.2 195.2a32 32 0 0 1 45.248 0l45.248 45.248a32 32 0 1 1-45.248 45.248L195.2 240.448a32 32 0 0 1 0-45.248zm543.104 543.104a32 32 0 0 1 45.248 0l45.248 45.248a32 32 0 0 1-45.248 45.248l-45.248-45.248a32 32 0 0 1 0-45.248M64 512a32 32 0 0 1 32-32h64a32 32 0 0 1 0 64H96a32 32 0 0 1-32-32m768 0a32 32 0 0 1 32-32h64a32 32 0 1 1 0 64h-64a32 32 0 0 1-32-32M195.2 828.8a32 32 0 0 1 0-45.248l45.248-45.248a32 32 0 0 1 45.248 45.248L240.448 828.8a32 32 0 0 1-45.248 0zm543.104-543.104a32 32 0 0 1 0-45.248l45.248-45.248a32 32 0 0 1 45.248 45.248l-45.248 45.248a32 32 0 0 1-45.248 0">
+                                </path>
+                            </svg>
+                        </el-icon></span>
+                </template>
+                <template #active-action>
+                    <span class="custom-inactive-action"><el-icon>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                                <path fill="currentColor"
+                                    d="M240.448 240.448a384 384 0 1 0 559.424 525.696 448 448 0 0 1-542.016-542.08 390.592 390.592 0 0 0-17.408 16.384zm181.056 362.048a384 384 0 0 0 525.632 16.384A448 448 0 1 1 405.056 76.8a384 384 0 0 0 16.448 525.696">
+                                </path>
+                            </svg></el-icon>
+                    </span>
+                </template>
+            </el-switch>
         </div>
     </el-menu>
-
 </template>
 
 <script setup lang="ts">
@@ -115,11 +131,13 @@ import axios from 'axios';
 import { ElLoading } from 'element-plus';
 import { ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useHeaderStore } from '../stores/header';
 import { useUserStore } from '../stores/userStore';
 import historyCard from './historyCard.vue';
 
+const headerStore = useHeaderStore()
 const fits = 'contain'
-const url ='https://www.auraxplorers.com/cdn/image/brand.png'
+const url = 'https://www.auraxplorers.com/cdn/image/brand.png'
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 const userStore = useUserStore();
@@ -138,7 +156,17 @@ defineProps<{
 }>()
 //加载的时候获取所有聊天记录
 onMounted(() => {
-    getUserWindowsAndUpdate()
+    //getUserWindowsAndUpdate()
+    const windowsInStorage = localStorage.getItem("windows")
+    if (windowsInStorage) {
+        windows.value = JSON.parse(windowsInStorage).map(window => ({
+            id: window.id,
+            name: window.name,
+            date: window.date,
+            content: window.content
+        }
+        ));
+    }
     //监听器
     window.addEventListener('resize', handleResize)
     handleResize() // 初始化时检查页面宽度
@@ -155,7 +183,7 @@ watch(() => userStore.session.isUpdating, (newState) => {
         //更新完，设置状态
         userStore.session.isUpdating = false;
     }
-}, { immediate: false });
+}, { immediate: true });
 
 function getUserWindowsAndUpdate() {
     getUserWindows()
@@ -167,6 +195,7 @@ function getUserWindowsAndUpdate() {
                 date: window.startDate,
                 content: window.firstMessage
             }));
+            localStorage.setItem("windows", JSON.stringify(windows.value));
         })
         .catch(error => {
             // 处理错误
@@ -174,7 +203,8 @@ function getUserWindowsAndUpdate() {
         });
 }
 
-axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
+//axios.defaults.baseURL = 'https://www.auraxplorers.com/api';
+axios.defaults.baseURL = 'http://localhost:8080/api';
 axios.defaults.headers.common['Authorization'] = userStore.session.token; //设置头部
 async function getUserWindows() {
     const loading = ElLoading.service({
@@ -221,10 +251,13 @@ const handleResize = () => {
     } else {
         isCollapse.value = false
     }
-    if (windowWidth<800){
-        isMobileMode.value = true
-    }else{
-        isMobileMode.value = false
+    if (windowWidth < 800) {
+        isMobileMode.value = true //是否手机模式，决定有些参数如何更改
+        headerStore.isShow = true //手机显示header，桌面端不显示
+    } else {
+        isCollapse.value =
+            isMobileMode.value = false
+        headerStore.isShow = false
     }
 }
 </script>
@@ -273,5 +306,6 @@ const handleResize = () => {
 /* menu的hover */
 :root {
     --el-menu-hover-bg-color: #82828257;
+
 }
 </style>

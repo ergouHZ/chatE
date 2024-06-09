@@ -35,48 +35,50 @@
     </div>
 </template>
 <script setup lang="ts">
+import { useHeaderStore } from "@/stores/header";
 import { useUserStore } from '@/stores/userStore';
 import cardOnExplore from '@/views/cardOnExplore.vue';
 import axios from 'axios';
-import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-interface Messages {
-    text: string;
-    isUser: boolean;
-}
-
-interface Model {
-    ai_id: number;
-    model_name: string;
-    title_name: string;
-    description: string;
-    model_url: string;
-}
-
+const HeaderStore = useHeaderStore();
 // 获取用户存储
 const UserStore = useUserStore();
 axios.defaults.headers.common['Authorization'] = UserStore.session.token;
 
-// 定义响应式数据
-const messages = ref<Messages[]>([]); // 页面展示的message
-const radio1 = ref('gpt');
-const newMessage = ref('');
-const saveMsg = ref<any[]>([]);
-const isLoading = ref(false);
-
+onMounted(()=>{
+    if (UserStore.session.isLoggedIn) {
+    renewUserSession();
+  }
+    HeaderStore.clear(); //选择栏清空
+})
 
 // 获取路由实例
 const router = useRouter();
+router.beforeEach((to, from, next) => {
+  if (to.matched.some(record => record.meta.requiresAuth) && !UserStore.session.isLoggedIn) {
+    next({ path:'/user' });
+  } else {
+    next();
+  }
+});
 
-const sendMessage = async () => {
-    // 判断输入框不为空
-    if (newMessage.value.trim() !== '') {
-        router.push({ path: '/chat-ai', query: { model: radio1.value, message: newMessage.value } });
-    } else {
-        router.push({ path: '/chat-ai', query: { model: radio1.value, message: '' } });
-    }
-};
+async function renewUserSession() {
+  if(UserStore.session.expiresAt && UserStore.session.expiresAt - new Date().getTime() <=21* 24 * 3600 * 1000-20*1000 ){ //令牌过期20秒，减少刷新次数，但是用户的plan需要实时更新
+  await axios.post('/user/login', {
+    username: UserStore.session.username,
+    password: UserStore.session.password,
+  })
+    .then((res) => {
+        UserStore.afterLoginSetSession(res.data.data);//手动登录或注册后，存入用户信息到session
+        UserStore.updateToken(res.data.token)
+    })
+    .catch((error) => {
+      console.log(error.response.data.error)
+      error.value = error.response.data.error
+    })
+}
+}
 </script>
 
 <style>
@@ -91,7 +93,7 @@ const sendMessage = async () => {
 }
 
 .top-part {
-    height: 10vh;
+    height: 7vh;
     align-items: center;
     padding-left: 15%;padding-right: 10%;
 }

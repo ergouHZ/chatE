@@ -1,4 +1,5 @@
 <template>
+    <transition name="el-zoom-in-top">
     <div class="ai-card" v-if="isShowCard">
         <el-card :disabled="false" :key="aiModel?.ai_id" class="select-card" shadow="hover">
             <div class="card-header">
@@ -9,12 +10,14 @@
                 </div>
                 <div class="title-name">{{ aiModel?.titleName }}</div>
                 <div @click.stop="onHandleClickTag()" style="display: inline-flex;">
-                    <el-tag type="primary" effect="light" round size="large">
+                    <el-tag v-if="aiModel?.authority == 1" type="primary" effect="light" round size="large">
                         PRO
                     </el-tag>
                     <div class="charge" style="margin-left: 20px;padding: 5px;padding-right:0;">
                         {{ aiModel?.charge }}
-                        <el-icon color="#409efc"><Cpu /></el-icon>
+                        <el-icon color="#409efc">
+                            <Cpu />
+                        </el-icon>
                     </div>
                 </div>
             </div>
@@ -24,6 +27,7 @@
             </div>
         </el-card>
     </div>
+</transition>
 </template>
 
 <script setup lang="ts">
@@ -52,8 +56,10 @@ const props = defineProps<{
 }>();
 
 watch(() => props.model, (newModel) => {
-    console.log("on card mew:"+newModel);
-    fetchAIModels(newModel); return
+    isShowCard.value = false
+    fetchAIModels(newModel); 
+
+    return
 }
     //, { immediate: true }   //组件挂载的时候执行
 );
@@ -62,14 +68,14 @@ watch(() => props.model, (newModel) => {
 const UserStore = useUserStore();
 axios.defaults.headers.common['Authorization'] = UserStore.session.token;
 const auth: number = UserStore.session.permissions;
-const isShowCard = ref(true);
+const isShowCard = ref(false);
 
 // 获取路由实例
 const router = useRouter();
 
 // 定义方法
 const fetchAIModels = async (modelName?: string) => {
-    console.log("on card: " , modelName);
+    console.log("on card: ", modelName);
     let models: Model[] = [];
     if (localStorage.getItem("aimodels") !== null) {
         try {
@@ -113,6 +119,7 @@ const fetchAIModels = async (modelName?: string) => {
                 duration: 5000
             });
         }
+        isShowCard.value = true
     } else {
         aiModel.value = models[0]; // 如果没有指定模型名，默认使用第一个模型
     }
@@ -120,8 +127,23 @@ const fetchAIModels = async (modelName?: string) => {
 
 // 在组件挂载时调用 fetchAIModels
 onMounted(() => {
+    isShowCard.value = true;
+    if (aiModel.value) {
+        if (aiModel.value.authority > auth) {
+            ElNotification({
+                title: 'Error',
+                message: "请重新续费",
+                type: 'error',
+                duration: 5000
+            });
+        }
+    }
     fetchAIModels(props.model);
 });
+
+onUnmounted(() => {
+  
+})
 
 const onHandleClickTag = () => {
     console.log("onHandleClick tag");
@@ -140,7 +162,7 @@ const onHandleClickTag = () => {
 
 }
 
-.el-card__body{
+.el-card__body {
     padding: 0;
 }
 
@@ -167,5 +189,9 @@ const onHandleClickTag = () => {
 .description {
     font-size: 0.9em;
     color: #666;
+}
+
+.el-zoom-in-top-enter-active, .el-zoom-in-top-leave-active {
+  transition: all 0.5s ease; /* 你可以根据需求调整时间和缓动函数 */
 }
 </style>

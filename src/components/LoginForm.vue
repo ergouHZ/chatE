@@ -115,14 +115,17 @@ const postUser = async (postMethod: string) => {
     const loadingVue = ElLoading.service({
         lock: false,
         text: 'Loading',
-        background: 'rgba(0, 0, 0, 0.5)',
+        background: 'rgba(0, 0, 0, 0.2)',
     })
+    if (isValidating.value) { 
+        loadingVue.close(); 
+        return } //还在验证中，无法提交
     await axios.post(`/user/${postMethod}`, {
         username: username.value,
         password: password.value
     })
         .then((res) => {
-            userStore.afterLoginForm(res.data.data, res.data.token);//手动登录或注册后，存入用户信息到session
+
             data.value = res.data
             const status = res.data.status
             const message = res.data.message
@@ -131,11 +134,17 @@ const postUser = async (postMethod: string) => {
                     message: message,
                     type: 'success'
                 })
-                loading.value = false
-                userStore.session.isUpdating = true
-                router.push({
-                    path: '/chat'
-                });
+                imageAnimation.value = false
+                cardAnimation.value = false //动画
+                setTimeout(() => {
+                    userStore.afterLoginSetSession(res.data.data);//手动登录或注册后，存入用户信息到session
+                    userStore.updateToken(res.data.token)
+                    router.push({
+                        path: '/chat'
+                    });
+                    // loading.value = false
+                    userStore.session.isUpdating = true
+                }, 600)
             } else {
                 ElNotification({
                     title: '登录注册' + status.status,
@@ -168,7 +177,9 @@ const isDisable = ref<boolean>(false) //账号密码是否禁用
 const isShownCaptcha = ref<boolean>(false) //是否显示验证块
 const isValidating = ref<boolean>(false) //是否正在验证中，用cloudflare
 const captchaInput = ref('');
-
+const imageAnimation = ref(false);//动画控件
+const cardAnimation = ref(false);
+const exampleContainer = ref(null);
 
 async function submitForm() {
     await axios.post('captcha/validate', {
@@ -283,7 +294,7 @@ const onSubmit = async () => {
         if (result.success) {
             isValidating.value = false;
         } else {
-            isDisable.value=true;
+            isDisable.value = true;
         }
     } catch (error) {
         // Handle network or server errors
@@ -295,10 +306,21 @@ const onSubmit = async () => {
 
 const turnSiteCaptcha = ref('')
 
+
+onBeforeMount(() => {
+ 
+
+});
+
 onMounted(() => {
-    window.onloadTurnstileCallback = () => {
+    imageAnimation.value = true;
+    setTimeout(() => {
+        cardAnimation.value = true;
+    }, 800);
+    (window as any).onloadTurnstileCallback = () => {
+        console.log("validate")
         isValidating.value = true; //这个组件能加载再开始验证
-        turnstile.render('#example-container', {
+        (window as any).turnstile.render(exampleContainer.value, {
             //sitekey:'0x4AAAAAAAb6pw3rG5Kf0Y9E',
             sitekey: '0x4AAAAAAAb6w1pqMDKCnZeY',  //部属用
             callback: function (token: string) {
@@ -307,63 +329,105 @@ onMounted(() => {
             },
         });
     };
-    
-});
+
+
+})
+
+// onMounted(() => {
+//     imageAnimation.value = true;
+//     setTimeout(() => {
+//         cardAnimation.value = true;
+//     }, 800)
+//   const loadScript = () => {
+//     return new Promise((resolve, reject) => {
+//       const script = document.createElement('script');
+//       script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onloadTurnstileCallback';
+//       script.defer = true;
+//       script.onload = resolve;
+//       script.onerror = reject;
+//       document.head.appendChild(script);
+//     });
+//   };
+
+//   loadScript()
+//     .then(() => {
+//       (window as any).onloadTurnstileCallback = () => {
+//         isValidating.value = true; // 这个组件能加载再开始验证
+//         (window as any).turnstile.render('#example-container', {
+//           sitekey: '0x4AAAAAAAb6w1pqMDKCnZeY', // 部属用
+//           callback: function (token) {
+//             turnSiteCaptcha.value = token;
+//             onSubmit();
+//           },
+//         });
+//       };
+//     })
+//     .catch((err) => {
+//       console.error('Failed to load Turnstile script', err);
+//     });
+// });
 </script>
 
 <template>
 
     <body v-if="!userStore.session.isLoggedIn">
-        <div class="login-form-layout">
-            <div>
-                <el-image class="logo-image" style="width: 500px;padding:20px" :src="url" :fit=fits />
-            </div>
-            <el-card id="example-container" class="box-card"
-                style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
-                <template #header>
-                    <div class="card-header">
-                        <span style="margin: 30px;">邮箱</span>
-                        <el-input v-model="username" @blur="validateOnBlur('username')"
-                            @click="validateOnClick('username')" style="width: 240px;" placeholder="请输入邮箱,用于注册本站账号" />
-                        <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
-                    </div>
-                </template>
-                <div class="text item">
-                    <div class="card-header">
-                        <span style="margin: 30px;">密码</span>
-                        <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
-                            @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
-                        <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
-                    </div>
+        <div  ref="exampleContainer"  class="login-form-layout">
+            <transition name="el-fade-in">
+                <div v-if="imageAnimation">
+                    <el-image class="logo-image" style="width: 500px;padding:20px" :src="url" :fit=fits />
                 </div>
-                <br>
-                <div class="text item">
-                    <div v-if="isFirstTime" class="card-header">
-                        <span style="margin: 14px;">确认密码</span>
-                        <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
-                            @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
-                        <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
-                    </div>
-                </div>
-                
-                <div class="cf-turnstile" data-sitekey="0x4AAAAAAAb6w1pqMDKCnZeY" data-callback="javascriptCallback" style="display: none;"></div>
-                <!-- TODO 部署的时候需要更换sitekey -->
-                <div style="display: flex; align-items: center; justify-content: center;">
-                    <!-- <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
+            </transition>
+            <transition name="el-zoom-in-center">
+                    <el-card v-if="cardAnimation" class="box-card"
+                        style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
+                        <template #header>
+                            <div class="card-header">
+                                <span style="margin: 30px;">邮箱</span>
+                                <el-input v-model="username" @blur="validateOnBlur('username')"
+                                    @click="validateOnClick('username')" style="width: 240px;"
+                                    placeholder="请输入邮箱,用于注册本站账号" />
+                                <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
+                            </div>
+                        </template>
+                        <div class="text item">
+                            <div class="card-header">
+                                <span style="margin: 30px;">密码</span>
+                                <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
+                                    @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                                <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
+                            </div>
+                        </div>
+                        <br>
+                        <div class="text item" v-if="isFirstTime">
+                            <div class="card-header">
+                                <span style="margin: 14px;">确认密码</span>
+                                <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
+                                    @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                                <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
+                            </div>
+                        </div>
+
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAb6w1pqMDKCnZeY"
+                            data-callback="javascriptCallback" style="display: none;"></div>
+                        <!-- TODO 部署的时候需要更换sitekey -->
+                        <div style="display: flex; align-items: center; justify-content: center;">
+                            <!-- <div v-if="isShownCaptcha"><el-button type="primary" size="large" round
                         @click="sendTheCaptchaEmail">验证邮箱</el-button></div>
                 <div v-else> -->
-                    <!-- <div v-if="isValidating" style="justify-content: center;align-items: center;">
+                            <!-- <div v-if="isValidating" style="justify-content: center;align-items: center;">
                     验证中
                     </div> -->
-                    <el-button v-if="!isFirstTime" v-loading="isValidating" size="large" type="primary" style="" :disabled="isDisable" round
-                        @click="login">登录</el-button>
-                    <el-button v-else size="large" v-loading="isValidating" type="primary" :disabled="isDisable" round plain
-                        @click="register">注册</el-button>
-                    <el-switch v-model="isFirstTime" class="mb-2" active-text="注册账号" inactive-text=""
-                        style="margin-left: 50px;" />
+                            <el-button v-if="!isFirstTime" v-loading="isValidating" size="large" type="primary" style=""
+                                :disabled="isDisable" round @click="login">登录</el-button>
+                            <el-button v-else size="large" v-loading="isValidating" type="primary" :disabled="isDisable"
+                                round plain @click="register">注册</el-button>
+                            <el-switch v-model="isFirstTime" class="mb-2" active-text="注册账号" inactive-text=""
+                                style="margin-left: 50px;" />
 
-                </div>
-            </el-card>
+                        </div>
+                    </el-card>
+ 
+            </transition>
             <ul class="bg-squares">
                 <li></li>
                 <li></li>
@@ -379,7 +443,8 @@ onMounted(() => {
         </div>
     </body>
 
-    <div v-else class="profile-form">
+    <div v-else class="profile-form"
+        style="height: 100vh; display: flex; align-items: center; justify-content: center;">
         <el-card class="box-card" style="width: 450px;background-color: #b6b6b622;border: none;">
             <template #header>
                 <div class="card-header">
@@ -437,14 +502,14 @@ onMounted(() => {
                         @click="register">设置密码</el-button>
                 </div>
             </div>
-
+            <el-popconfirm title="确定退出么?" @confirm="logout">
+                <template #reference>
+                    <el-button type="warning">退出登录</el-button>
+                </template>
+            </el-popconfirm>
         </el-card>
 
-        <el-popconfirm title="确定退出么?" @confirm="logout">
-            <template #reference>
-                <el-button type="warning">退出登录</el-button>
-            </template>
-        </el-popconfirm>
+
 
     </div>
 </template>
@@ -612,5 +677,20 @@ body {
 
 .login-form-layout {
     display: inline-flex
+}
+
+
+
+
+.el-zoom-in-center-enter-active,
+.el-zoom-in-center-leave-active {
+    transition: all 0.8s ease;
+    /* 你可以根据需求调整时间和缓动函数 */
+}
+
+.el-fade-in-enter-active,
+.el-fade-in-leave-active {
+    transition: all 1.5s ease;
+    /* 你可以根据需求调整时间和缓动函数 */
 }
 </style>
