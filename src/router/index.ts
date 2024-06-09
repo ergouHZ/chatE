@@ -25,7 +25,7 @@ const router = createRouter({
       path: '/chat',
       name: 'Chat',
       component: ChatWindow,
-      meta: { requiresAuth: true }
+      // meta: { requiresAuth: true }
     },
     {
       path: '/chat-ai',

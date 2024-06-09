@@ -183,7 +183,7 @@ const cardAnimation = ref(false);
 const exampleContainer = ref(null);
 
 async function submitForm() {
-    await axios.post('captcha/validate', {
+    await axios.post('/captcha/validate', {
         username: username.value,
         captcha: captchaInput.value.trim(),
     })
@@ -306,12 +306,6 @@ const onSubmit = async () => {
 };
 
 const turnSiteCaptcha = ref('')
-
-
-onBeforeMount(() => {
-
-
-});
 
 onMounted(() => {
     isValidating.value = true;
