@@ -4,7 +4,7 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/atom-one-dark.min.css">
     <!-- 用户的message部分 -->
-    <div class="chat-container">
+    <div class="chat-container" :style="{ height: getWindowHeight }">
         <div ref="containerRef" class="messages-container">
             <div class="head-card-ai">
                 <CardOnChat :model="model" />
@@ -13,7 +13,8 @@
                 :class="{ 'user-message': message.isUser, 'server-message': !message.isUser }">
                 <span v-if="message.isUser" class="message-content">
                     <div class="model-info">
-                        <el-avatar class="user-avatar" shape="circle" :size="36" :style="{ backgroundColor: avatarColor }">{{ userAvatarName }} </el-avatar>
+                        <el-avatar class="user-avatar" shape="circle" :size="36"
+                            :style="{ backgroundColor: avatarColor }">{{ userAvatarName }} </el-avatar>
                     </div>
                     <br>
                     {{ message.text }}
@@ -45,6 +46,7 @@
         <!-- 是否展示loading -->
         <!--     <div v-if="isLoading" class="loading-indicator">Loading...</div> -->
         <!-- chat input部分 -->
+
         <div class="chat-input-container">
             <el-input :class="'message-input'" v-loading="isLoading && isImageGenerated" v-model="newMessage"
                 :autosize="{ minRows: 2, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
@@ -86,7 +88,7 @@ import DOMPurify from 'dompurify'; //文本使用html渲染，这里要防止注
 import { ElLoading, ElNotification } from 'element-plus';
 import hljs from 'highlight.js';
 import { default as MarkdownIt, default as markdownItHighlightjs } from 'markdown-it';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 interface Messages {
@@ -234,8 +236,8 @@ onBeforeMount(() => {
 onMounted(() => {
     const module = UserStore.session.userId!! % 10; //对user id取模
 
-// 根据模块数据分配颜色
-avatarColor.value = assignColor(module);
+    // 根据模块数据分配颜色
+    avatarColor.value = assignColor(module);
     headerStore.setModel(model.value)
     //这里不加在新内容，由watch负责，不然会重复
     if (windowId.value) {
@@ -729,17 +731,25 @@ const getChargeByModelName = (modelName) => {
     return modelChargeMap.value[modelName];
 };
 
-const avatarColor =ref('#FF5733')
+const avatarColor = ref('#FF5733')
 const assignColor = (module) => {
     // 定义10种不同的颜色
     const colors = [
-  '#2E2E2E', '#3B3B3B', '#4A4A4A', '#5B5B5B', '#6C6C6C',
-  '#7D7D7D', '#8E8E8E', '#9F9F9F', '#B0B0B0', '#C1C1C1'
-];
+        '#2E2E2E', '#3B3B3B', '#4A4A4A', '#5B5B5B', '#6C6C6C',
+        '#7D7D7D', '#8E8E8E', '#9F9F9F', '#B0B0B0', '#C1C1C1'
+    ];
 
     // 根据模块ID返回对应的颜色
     return colors[module];
 }
+
+const getWindowHeight = computed(() => {
+    if (headerStore.isShow) {
+        let height = window.innerHeight - 51;
+        return height + "px";
+    }
+
+});
 </script>
 <style scope>
 .chat-info {}
@@ -831,6 +841,7 @@ const assignColor = (module) => {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+
 }
 
 .model-avatar {
@@ -850,17 +861,18 @@ const assignColor = (module) => {
     display: flex;
     align-items: center;
     background-color: transparent;
-
+    bottom: 3vh;
+    text-align: center;
+    justify-items: center;
     bottom: 0;
     margin-bottom: 20px;
-    width: 80%;
-    max-width: 900px;
+    width: 84%;
+    max-width: 760px;
 }
 
 .chat-input-in-real {
     flex: 1;
     margin: 10px;
-
 }
 
 /* 代码区块 */
@@ -941,8 +953,28 @@ pre {
         font-weight: bolder;
     }
 
+    .user-message,
+    .server-message {
+        /*  background-color: #badafb31; */
+        margin-bottom: 2em;
+        align-self: center;
+        padding: 5px;
+        width: 97vw;
+        max-width: 100% !important;
+        font-size: medium;
+        /* border: 1.5px solid #71707073; */
+    }
+
+    .messages-container {
+    flex: 1;
+    padding-left: 0% !important;
+    padding-right:0% !important;
+}
+
+
     .chat-input-container {
-        margin-bottom: 11vh;
+        margin-bottom: 0vh;
+        width: 97%;
     }
 }
 </style>

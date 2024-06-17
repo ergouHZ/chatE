@@ -2,11 +2,8 @@
   <div class="container">
     <el-button @click="toggleShowNav"
             style="margin-left: 0px; width: 50px;border: none; height: 47px;margin: 2px;">
-            <el-icon v-if="!headerStore.isShowNav">
+            <el-icon>
                 <More />
-            </el-icon>
-            <el-icon v-else>
-                <Switch />
             </el-icon>
         </el-button>
     <div class="left-content">
@@ -34,6 +31,11 @@
         </el-button>
     </div>
   </div>
+
+
+  <el-drawer v-model="headerStore.isShowNav" title="目录" direction="ltr" :before-close="handleClose" size="260px" style="padding: 0;">
+<NavMenu />
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
@@ -41,17 +43,18 @@ import { useHeaderStore } from "@/stores/header";
 import { changeToThumb, modifyName } from "@/utils";
 import {
 House,
-More,
-Switch
+More
 } from '@element-plus/icons-vue';
 import { useDark, useToggle } from "@vueuse/core";
 import { useRouter } from "vue-router";
+import NavMenu from "./NavMenu.vue";
 const isDark = useDark();
 const toggleDark = useToggle(isDark);
 const headerStore = useHeaderStore();
 const model = ref('');
 const modelAvatar = ref('')
 const router = useRouter()
+const isShowNav = ref(false);
 
 watch(() => headerStore.model, (newModel) => {
   model.value = newModel;
@@ -68,7 +71,8 @@ onMounted(() => {
 })
 
 const toggleShowNav = ()=>{
-  headerStore.isShowNav =!headerStore.isShowNav;
+  isShowNav.value = !isShowNav.value;
+  headerStore.isShowNav = !headerStore.isShowNav
 }
 
 const navToHome = ()=>{
@@ -76,10 +80,16 @@ const navToHome = ()=>{
     path: "/chat",
   })
 }
+
+const handleClose = (done: () => void) => {
+    done()
+}
 </script>
 
 <style scope>
-
+.el-drawer__body {
+  padding: 0 !important;
+}
 </style>
 
 <style scoped>

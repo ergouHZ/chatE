@@ -1,7 +1,7 @@
 <template>
-    <el-menu v-if="!isMobileMode || headerStore.isShowNav" default-active="10" class="el-menu-vertical-demo"
-        :collapse="isCollapse" @open="handleOpen" @close="handleClose">
-        <div v-if="!isMobileMode">
+    <el-menu default-active="10" class="el-menu-vertical-demo" :collapse="isCollapse"
+        @open="handleOpen" @close="handleClose">
+        <div v-if="!headerStore.isShow">
             <el-button @click="toggleCollapse"
                 style="margin-bottom: 5px;width: 64px;border: 1.5px solid #71707073 ;height: 40px;">
                 <el-icon v-if="isCollapse">
@@ -90,7 +90,7 @@
                 </el-icon>
                 <template #title>用户</template>
             </el-menu-item>
-        </RouterLink>  
+        </RouterLink>
         <div class="menu-footer">
             <el-switch v-model="isDark" size="large" style="--el-switch-on-color:#2e55d497">
                 <template #inactive-action>
@@ -126,7 +126,7 @@ More,
 Setting,
 Switch
 } from '@element-plus/icons-vue';
-import { useDark, useToggle } from "@vueuse/core";
+import { useDark } from "@vueuse/core";
 import axios from 'axios';
 import { ElLoading } from 'element-plus';
 import { ref } from 'vue';
@@ -139,9 +139,7 @@ const headerStore = useHeaderStore()
 const fits = 'contain'
 const url = 'https://www.auraxplorers.com/cdn/image/brand.png'
 const isDark = useDark();
-const toggleDark = useToggle(isDark);
 const userStore = useUserStore();
-const isMobileMode = ref<boolean>(false);
 
 interface Window {
     id: any;
@@ -156,24 +154,8 @@ defineProps<{
 }>()
 //加载的时候获取所有聊天记录
 onMounted(() => {
-    //getUserWindowsAndUpdate()
-    const windowsInStorage = localStorage.getItem("windows")
-    if (windowsInStorage) {
-        windows.value = JSON.parse(windowsInStorage).map(window => ({
-            id: window.id,
-            name: window.name,
-            date: window.date,
-            content: window.content
-        }
-        ));
-    }
-    //监听器
-    window.addEventListener('resize', handleResize)
-    handleResize() // 初始化时检查页面宽度
-})
 
-onUnmounted(() => {
-    window.removeEventListener('resize', handleResize)
+
 })
 
 // 监听 userStore.session.isUpdating 的变化，有信息更新，重新获取
@@ -241,25 +223,63 @@ const handleClose = (key: string, keyPath: string[]) => {
 
 function toggleCollapse() {
     isCollapse.value = !isCollapse.value
-
 }
 
-const handleResize = () => {
-    const windowWidth = window.innerWidth
-    if (windowWidth < 1090) {
-        isCollapse.value = true
+
+const handleMobileChange = (event) => {
+    if (event.matches) {
+        isCollapse.value = false
+        headerStore.isShow = true //这个值等价手机模式
     } else {
+        headerStore.isShow = false
+        isCollapse.value = true
+    }
+}
+
+const handleCollapseChange = (event) => {
+    if (event.matches && !headerStore.isShow) {
+        isCollapse.value = true
+    } else if (!headerStore.isShow) {
         isCollapse.value = false
     }
-    if (windowWidth < 800) {
-        isMobileMode.value = true //是否手机模式，决定有些参数如何更改
-        headerStore.isShow = true //手机显示header，桌面端不显示
-    } else {
-        isCollapse.value =
-            isMobileMode.value = false
-        headerStore.isShow = false
-    }
 }
+
+let mqlCollapse, mqlMobile
+
+onMounted(() => {
+    //getUserWindowsAndUpdate()
+    const windowsInStorage = localStorage.getItem("windows")
+    if (windowsInStorage) {
+        windows.value = JSON.parse(windowsInStorage).map(window => ({
+            id: window.id,
+            name: window.name,
+            date: window.date,
+            content: window.content
+        }
+        ));
+    }
+
+    // Media query for mobile mode
+    mqlMobile = window.matchMedia('(max-width: 799px)')
+    // Media query for desktop mode with collapse
+    mqlCollapse = window.matchMedia('(min-width: 800px) and (max-width: 1200px)') //小屏幕
+
+    // Add listeners
+    mqlMobile.addListener(handleMobileChange)
+    mqlCollapse.addListener(handleCollapseChange)
+
+    // Initialize with current state
+    handleMobileChange(mqlMobile)
+    handleCollapseChange(mqlCollapse)
+
+
+})
+
+onUnmounted(() => {
+    // Remove listeners
+    mqlMobile.removeListener(handleMobileChange)
+    mqlCollapse.removeListener(handleCollapseChange)
+})
 </script>
 
 <style scope>

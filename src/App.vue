@@ -1,13 +1,12 @@
 <template>
 
   <html v-if="userSession.session.isLoggedIn">
-
   <body>
-    <el-header v-if="isShowHeader" style="padding: 0;height: 51px;">
+    <el-header v-if="headerStore.isShow" style="padding: 0;height: 51px;">
       <headerCus />
     </el-header>
     <el-container class="layout-container-demo" style="height: 100vh">
-      <NavMenu />
+      <NavMenu  v-if="!headerStore.isShow"/>
       <el-container>
         <el-main style="height: 100vh; overflow: auto">
           <RouterView />
@@ -19,7 +18,6 @@
   </html>
   <html v-else>
   <RouterView />
-
   </html>
 </template>
 
@@ -41,20 +39,33 @@ const userSession = useUserStore();
 const isMobileMode = ref<boolean>(false);
 const isShowHeader = ref<boolean>(false);
 
-watch(() => headerStore.isShow, (newState) => {
-  isShowHeader.value = newState
-    , { immediate: true }
-})
-
 onBeforeMount(() => {
   userSession.initSession();
 })
+
+
+
+let mqlMobile; //这个值在这里有些重复，但是nav的监听器一旦nav被隐藏就没了，因此无法打开，后续需要把监听器全部放这里
 
 onMounted(() => {
   if (userSession.session.isLoggedIn) {
     renewUserSession();
   }
+    // Media query for mobile mode
+    mqlMobile = window.matchMedia('(max-width: 799px)')
+    // Add listeners
+    mqlMobile.addListener(handleMobileChange)
+    // Initialize with current state
+    handleMobileChange(mqlMobile)
 });
+
+const handleMobileChange = (event) => {
+    if (event.matches) {
+        headerStore.isShow = true //这个值等价手机模式
+    } else {
+        headerStore.isShow = false
+    }
+}
 
 async function renewUserSession() {
   if (userSession.session.expiresAt && userSession.session.expiresAt - new Date().getTime() <= 21 * 24 * 3600 * 1000 - 20 * 1000) { //令牌过期20秒，减少刷新次数，但是用户的plan需要实时更新
@@ -74,6 +85,7 @@ async function renewUserSession() {
 }
 
 router.beforeEach((to, from, next) => {
+  headerStore.isShowNav=false;//切换页面，关闭手机导航
   if (to.matched.some(record => record.meta.requiresAuth) && !userSession.session.isLoggedIn) {
     next({ path: '/user' });
   } else {
