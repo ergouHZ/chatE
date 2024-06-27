@@ -49,20 +49,20 @@
 
         <div class="chat-input-container">
             <el-input :class="'message-input'" v-loading="isLoading && isImageGenerated" v-model="newMessage"
-                :autosize="{ minRows: 2, maxRows: 8 }" type="textarea" placeholder="今天想聊什么" class="chat-input-in-real"
+                :autosize="{ minRows: 2, maxRows: 8 }" type="textarea" placeholder="Start a new chat" class="chat-input-in-real"
                 :disabled="isLoading" @keydown="handleKeyDown">
                 <!-- @keyup.enter="sendMessage" -->
             </el-input>
             <div v-if="!isLoading">
                 <el-button :loading="isLoading" :disabled="isLoading" @click="sendMessage">
-                    发送
+                    Send
                     <el-icon class="el-icon--right">
                         <ArrowRight />
                     </el-icon>
                 </el-button>
             </div>
             <el-button v-if="isLoading" :disabled="!isLoading" @click="abortMessage">
-                停止
+                Stop
                 <el-icon class="el-icon--right">
                     <Close />
                 </el-icon>
@@ -645,7 +645,7 @@ const requestImageFormDalle = async (model) => {
         }
         ElNotification({
             title: '提示',
-            message: '此模型下图片请尽快保存,10分钟后图片将有可能失效',
+            message: 'Please save the image below this model as soon as possible. The image may become invalid after 10 minutes',
             type: 'warning',
         })
     } catch (error) {

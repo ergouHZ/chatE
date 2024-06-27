@@ -39,6 +39,8 @@ export const changeToThumb = (modelName) => {
   }
   else if (modelName === 'claude-2.0') {
     return 'https://www.auraxplorers.com/cdn/image/claude2.png'
+  }else if (modelName === 'claude-3-5-sonnet-20240620') {
+    return 'https://www.auraxplorers.com/cdn/image/claude3.5-sonnet.jpeg'
   }
   
   

@@ -32,7 +32,7 @@
                 <el-icon>
                     <EditPen />
                 </el-icon>
-                <span>消息记录</span>
+                <span>Histories</span>
             </template>
             <!-- <div class="histories-window">
                 <historyCard :windows="windows" />
@@ -49,7 +49,7 @@
                     <el-icon>
                         <ChatLineSquare />
                     </el-icon>
-                    <template #title>搜索</template>
+                    <template #title>Search</template>
                 </el-menu-item>
             </RouterLink>
             <RouterLink to="/subscribe" class="menu-item">
@@ -57,7 +57,7 @@
                     <el-icon>
                         <Bell />
                     </el-icon>
-                    <template #title>订阅</template>
+                    <template #title>Subscription</template>
                 </el-menu-item>
             </RouterLink>
         </div>
@@ -88,7 +88,7 @@
                 <el-icon>
                     <setting />
                 </el-icon>
-                <template #title>用户</template>
+                <template #title>User</template>
             </el-menu-item>
         </RouterLink>
         <div class="menu-footer">

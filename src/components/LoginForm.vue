@@ -34,10 +34,10 @@ const url =
 function validateUsername(username: string): string | null {
     if (!usernameRegex.test(username)) {
         ElMessage({
-            message: '请输入有效的电子邮件地址',
+            message: 'Please enter a valid email address',
             type: 'warning'
         })
-        return '请输入有效的电子邮件地址';
+        return 'Please enter a valid email address';
     }
     return null;
 }
@@ -46,19 +46,19 @@ function validatePassword(password: string): string | null {
     if (!passwordRegex.test(password)) {
         if (password.length < 6) {
             ElMessage({
-                message: '密码不能小于6位数',
+                message: 'The password length cannot be less than 6 character',
                 type: 'warning'
             })
             return 'The password length cannot be less than 6 characters';
         } else if (password.length > 20) {
             ElMessage({
-                message: '密码不能超过20位',
+                message: 'The password length cannot exceed 20 characters',
                 type: 'warning'
             })
             return 'The password length cannot exceed 20 characters';
         } else {
             ElMessage({
-                message: '密码只能包括字母和数字',
+                message: 'The account can only contain letters, numbers and special symbols',
                 type: 'warning'
             })
             return 'The account can only contain letters, numbers and special symbols';
@@ -101,7 +101,7 @@ function register() {
         }
     } else {
         ElMessage({
-            message: '两次输入的密码不一致',
+            message: 'The passwords entered twice do not match.',
             type: 'warning'
         })
     }
@@ -148,7 +148,7 @@ const postUser = async (postMethod: string) => {
                 }, 600)
             } else {
                 ElNotification({
-                    title: '登录注册' + status.status,
+                    title: 'Signin' + status.status,
                     message: message,
                     type: 'warning'
                 })
@@ -377,31 +377,31 @@ onMounted(() => {
                     style="width: 450px;background-color: #b6b6b666;border: none; color: black;">
                     <template #header>
                         <div class="card-header">
-                            <span style="margin: 30px;">邮箱</span>
+                            <span style="margin: 44px;">email</span>
                             <el-input v-model="username" @blur="validateOnBlur('username')"
                                 @click="validateOnClick('username')" style="width: 240px;"
-                                placeholder="请输入邮箱,用于注册本站账号" />
+                                placeholder="Please enter the email as username" />
                             <!-- <span class="errorReminder" v-if="usernameError"><br>{{ usernameError }}</span> -->
                         </div>
                     </template>
                     <div class="text item">
                         <div class="card-header">
-                            <span style="margin: 30px;">密码</span>
+                            <span style="margin: 29px;">password</span>
                             <el-input type="password" v-model="password" @blur="validateOnBlur('password')"
-                                @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                                @click="validateOnClick('password')" style="width: 240px" placeholder="please enter the password" />
                             <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
                         </div>
                     </div>
                     <br>
                     <div class="text item" v-if="isFirstTime">
                         <div class="card-header">
-                            <span style="margin: 14px;">确认密码</span>
+                            <span style="margin: 9px;">verif password</span>
                             <el-input type="password" v-model="passwordConfirm" @blur="validateOnBlur('password')"
-                                @click="validateOnClick('password')" style="width: 240px" placeholder="请输入密码" />
+                                @click="validateOnClick('password')" style="width: 240px" placeholder="please enter the password" />
                             <!-- <span class="errorReminder" v-if="passwordError"><br>{{ passwordError }}</span> -->
                         </div>
                     </div>
-
+                    <br>
                     <!-- <vue-turnstile :site-key="turnSliteKey" v-model="turnSiteCaptcha" /> -->
                     <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAAb6pw3rG5Kf0Y9E" style="display: none;"></div> -->
                     <!-- TODO 部署的时候需要更换sitekey -->
@@ -413,9 +413,9 @@ onMounted(() => {
                     验证中
                     </div> -->
                         <el-button v-if="!isFirstTime" v-loading="isValidating" size="large" type="primary" style=""
-                            :disabled="isDisable" round @click="login">登录</el-button>
+                            :disabled="isDisable" round @click="login">login</el-button>
                         <el-button v-else size="large" v-loading="isValidating" type="primary" :disabled="isDisable"
-                            round plain @click="register">注册</el-button>
+                            round plain @click="register">register</el-button>
                         <el-switch v-model="isFirstTime" class="mb-2" active-text="注册账号" inactive-text=""
                             style="margin-left: 50px;" />
 
