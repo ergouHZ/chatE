@@ -7,6 +7,7 @@
                     <div class="select-title">
                         Select and Start
                     </div>
+                    
                 <!--     <el-radio-group v-model="radio1">
                         <el-radio value="gpt-3.5-turbo-0125" size="large" border>Chat-GPT</el-radio>
                         <el-radio value="claude-3-haiku-20240307" size="large" border>Claude</el-radio>
@@ -33,6 +34,7 @@
             </div>
         </el-scrollbar>
     </div>
+    
 </template>
 <script setup lang="ts">
 import { useHeaderStore } from "@/stores/header";
